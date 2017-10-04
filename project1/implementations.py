@@ -42,3 +42,23 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma):
               bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]))
 
     return losses, ws
+
+
+def least_squares_SGD(y, tx, initial_w, max_iters, gamma):
+    """Stochastic gradient descent algorithm."""
+    ws = [initial_w]
+    losses = []
+    w = initial_w
+    for n_iter in range(max_iters):
+        loss = 0
+        gradLw = 0
+        for mini_y, mini_tx in batch_iter(batch_size=batch_size,tx=tx,y=y):
+            loss += compute_loss(mini_y,mini_tx,w,'mse')/batch_size
+            gradLw += compute_gradient(mini_y,mini_tx,w,'mse')/batch_size
+        w = w-gamma*gradLw
+        ws.append(w)
+        losses.append(loss)
+        print("Gradient Descent({bi}/{ti}): loss={l}, w0={w0}, w1={w1}".format(
+              bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]))
+    return losses, ws
+
