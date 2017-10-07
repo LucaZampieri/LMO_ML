@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 """Least Squares (or Mean Absolute) Gradient Descent"""
 
-def compute_loss(y, tx, w, fct):
+def compute_loss(y, tx, w, fct='mse'):
     """Calculate the loss.
     You can calculate the loss using mse or mae.
     """
     e = y-tx.dot(w)
     if fct=='mse':
-        return 1./(2.*y.shape[0])*e.dot(e)
-    else if fct=='mae':
+        return 1./(2.*y.shape[0])*e@e
+    elif fct=='mae':
         return 1./(2*y.shape[0])*np.sum(np.abs(e))
     else:
         raise NotImplementedError
     
     
-def compute_gradient(y, tx, w, fct):
+def compute_gradient(y, tx, w, fct='mse'):
     """Compute the gradient."""
     e = y-tx.dot(w)
     if fct=='mse':
-        return -1./y.shape[0]*tx.T.dot(e)
-    else if fct=='mae':
+        return -1./y.shape[0]*tx.T@e
+    elif fct=='mae':
         return -1./y.shape[0]*tx.T.dot(np.sign(e))
     else:
         raise NotImplementedError
