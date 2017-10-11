@@ -7,7 +7,7 @@ def compute_loss(y, tx, w, fct):
     """
     e = y-tx.dot(w)
     if fct=='mse':
-        return 1./(2.*y.shape[0])*e.dot(e)
+        return 1./(2.*y.shape[0])*e@e
     else if fct=='mae':
         return 1./(2*y.shape[0])*np.sum(np.abs(e))
     else:
