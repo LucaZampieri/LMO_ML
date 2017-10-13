@@ -89,7 +89,7 @@ def least_squares_luca(y, tx):
     w_star = np.linalg.inv(Gram)@tx.T@y
     e = y-tx@w_star
     mse = 1/2/y.shape[0]*e.T@e
-    print(len(w_star.shape))
+    #print(len(w_star.shape))
     return mse, w_star
     raise NotImplementedError
     
