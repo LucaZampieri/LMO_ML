@@ -2,31 +2,10 @@
 """Least Squares (or Mean Absolute) Gradient Descent"""
 
 import numpy as np 
+from numpy import matlib
+import costs
 
-def compute_loss(y, tx, w, fct='mse'):
-    """Calculate the loss.
-    You can calculate the loss using mse or mae.
-    """
-    e = y-tx.dot(w)
-    if fct=='mse':
-        return 1./(2.*y.shape[0])*e.T@e
-    elif fct=='mae':
-        return 1./(2*y.shape[0])*np.sum(np.abs(e))
-    else:
-        raise NotImplementedError
-    
-    
-def compute_gradient(y, tx, w, fct='mse'):
-    """Compute the gradient."""
-    e = y-tx.dot(w)
-    if fct=='mse':
-        return -1./y.shape[0]*tx.T@e
-    elif fct=='mae':
-        return -1./y.shape[0]*tx.T.dot(np.sign(e))
-    else:
-        raise NotImplementedError
 
-        
 def least_squares_GD(y, tx, initial_w, max_iters, gamma):
     """Gradient descent algorithm."""
     # Define parameters to store w and loss
@@ -34,8 +13,8 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma):
     losses = []
     w = initial_w
     for n_iter in range(max_iters):
-        loss = compute_loss(y,tx,w,'mse')
-        gradLw = compute_gradient(y,tx,w)
+        loss = costs.compute_loss(y,tx,w,'mse')
+        gradLw = costs.compute_gradient(y,tx,w)
         w = w-gamma*gradLw
         # store w and loss
         ws.append(w)
@@ -55,14 +34,40 @@ def least_squares_SGD(y, tx, initial_w, max_iters, gamma):
         loss = 0
         gradLw = 0
         for mini_y, mini_tx in batch_iter(batch_size=batch_size,tx=tx,y=y):
-            loss += compute_loss(mini_y,mini_tx,w,'mse')/batch_size
-            gradLw += compute_gradient(mini_y,mini_tx,w,'mse')/batch_size
+            loss += costs.compute_loss(mini_y,mini_tx,w,'mse')/batch_size
+            gradLw += costs.compute_gradient(mini_y,mini_tx,w,'mse')/batch_size
         w = w-gamma*gradLw
         ws.append(w)
         losses.append(loss)
         print("Gradient Descent({bi}/{ti}): loss={l}, w0={w0}, w1={w1}".format(
               bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]))
     return losses, ws
+    
+    
+def least_squares(y, tx, fct='none'):
+    """Calculate the least squares solution."""
+    wstar = np.linalg.solve(tx.T.dot(tx),(tx.T).dot(y))
+    if fct=='mse' || fct=='rmse':
+        loss = costs.compute_loss(y,tx,wstar,fct)
+        return mse, wstar
+    else: #'none'
+        return wstar
+
+
+def ridge_regression(y, tx, lambda_, fct='none'):
+    """Implement ridge regression."""
+    wstar = np.linalg.solve(tx.T.dot(tx)+2*len(y)*lambda_*np.matlib.identity(tx.shape[1]),(tx.T).dot(y))
+    if fct=='mse' || fct=='rmse':
+        ridge = costs.compute_ridge_loss(y,tx,wstar,lambda_,fct)
+        return ridge, wstar
+    else: #'none'
+        return wstar
+
+
+# **********************************************************************
+# ************************ TO CLEAN ************************************
+# **********************************************************************
+
 
 def least_squares_matteo(y, tx):
     """calculate the least squares solution."""
@@ -93,7 +98,7 @@ def least_squares_luca(y, tx):
     return mse, w_star
     raise NotImplementedError
     
-def ridge_regression(y, tx, lambda_):
+def ridge_regression_luca_matteo(y, tx, lambda_):
     """implement ridge regression."""
     # ***************************************************
     # INSERT YOUR CODE HERE
