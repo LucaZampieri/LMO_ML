@@ -47,7 +47,7 @@ def least_squares_SGD(y, tx, initial_w, max_iters, gamma):
 def least_squares(y, tx, fct='none'):
     """Calculate the least squares solution."""
     wstar = np.linalg.solve(tx.T.dot(tx),(tx.T).dot(y))
-    if fct=='mse' || fct=='rmse':
+    if (fct=='mse' or fct=='rmse'):
         loss = costs.compute_loss(y,tx,wstar,fct)
         return mse, wstar
     else: #'none'
@@ -57,7 +57,7 @@ def least_squares(y, tx, fct='none'):
 def ridge_regression(y, tx, lambda_, fct='none'):
     """Implement ridge regression."""
     wstar = np.linalg.solve(tx.T.dot(tx)+2*len(y)*lambda_*np.matlib.identity(tx.shape[1]),(tx.T).dot(y))
-    if fct=='mse' || fct=='rmse':
+    if (fct=='mse' or fct=='rmse'):
         ridge = costs.compute_ridge_loss(y,tx,wstar,lambda_,fct)
         return ridge, wstar
     else: #'none'
