@@ -49,7 +49,7 @@ def least_squares(y, tx, fct='none'):
     wstar = np.linalg.solve(tx.T.dot(tx),(tx.T).dot(y))
     if (fct=='mse' or fct=='rmse'):
         loss = costs.compute_loss(y,tx,wstar,fct)
-        return mse, wstar
+        return loss, wstar
     else: #'none'
         return wstar
 
@@ -64,48 +64,74 @@ def ridge_regression(y, tx, lambda_, fct='none'):
         return wstar
 
 
-# **********************************************************************
-# ************************ TO CLEAN ************************************
-# **********************************************************************
+def logistic_regression(y, tx, initial_w, max_iters, gamma):
+    """Logistic Regression using gradient descent"""
+    
+    # Init parameters
+    threshold = 1e-8
+    losses = []
+    
+    # Logistic regression loop
+    for iter in range(max_iters):
+        
+        # Calculate actual loss and gradient
+        loss = costs.compute_logreg_loss(y, tx, initial_w)
+        grad = costs.compute_gradient(y, tx, initial_w, 'logreg')
+        
+        # Update initial_w and keep the losses into memory
+        initial_w = initial_w - gamma*grad
+        losses.append(loss)
+        
+        # Converge criteria
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
+            break
+    return initial_w, losses[-1]
 
 
-def least_squares_matteo(y, tx):
-    """calculate the least squares solution."""
-    # ***************************************************
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+    """Regularized logistic regression using gradient descent"""
+   
+    # Init parameters
+    threshold = 1e-8
+    losses = []
     
-    w_opt=(np.linalg.inv((tx.T.dot(tx))).dot(tx.T)).dot(y);
-    if(len(w_opt.shape)==1):
-        w_opt=w_opt.reshape(len(w_opt),1);
-    # INSERT YOUR CODE HERE
-    # least squares: TODO
-    # returns mse, and optimal weights
-    # ***************************************************
-    
-    return w_opt
+    # Regularized logistic regression loop
+    for iter in range(max_iters):
+        
+        # Calculate actual loss and gradient
+        loss = costs.compute_logreg_loss(y, tx, initial_w) + lambda_*np.sum(initial_w*initial_w)
+        grad = costs.compute_gradient(y, tx, initial_w, 'logreg') + 2*lambda_*initial_w
+        
+        # Update initial_w and keep the losses into memory
+        initial_w = initial_w - gamma*grad
+        losses.append(loss)
+        
+        # Converge criteria
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
+            break
+    return initial_w, losses[-1]
 
-def least_squares_luca(y, tx):
-    """calculate the least squares solution."""
-    # ***************************************************
-    # INSERT YOUR CODE HERE
-    # least squares: TODO
-    # returns mse, and optimal weights
-    # ***************************************************
-    Gram = tx.T@tx
-    w_star = np.linalg.inv(Gram)@tx.T@y
-    e = y-tx@w_star
-    mse = 1/2/y.shape[0]*e.T@e
-    #print(len(w_star.shape))
-    return mse, w_star
-    raise NotImplementedError
+
+def reg_logistic_regression_newton(y, tx, lambda_, initial_w, max_iters, gamma):
+    """Regularized logistic regression using gradient descent"""
+   
+    # Init parameters
+    threshold = 1e-8
+    losses = []
     
-def ridge_regression_luca_matteo(y, tx, lambda_):
-    """implement ridge regression."""
-    # ***************************************************
-    # INSERT YOUR CODE HERE
-    A=tx.T.dot(tx);
-    lambda_=lambda_*(2*y.shape[0]);
-    w_opt=(np.linalg.inv(A+lambda_*np.identity(A.shape[0])).dot(tx.T)).dot(y); 
-    
-    return w_opt
-    # ridge regression: TODO
-    # ***************************************************
+    # Regularized logistic regression loop - Newton method
+    for iter in range(max_iters):
+		
+        # Calculate actual loss and gradient
+        loss = costs.compute_logreg_loss(y, tx, initial_w) + lambda_*np.sum(initial_w*initial_w)
+        grad = costs.compute_gradient(y, tx, initial_w, 'logreg') + 2*lambda_*initial_w
+        H = costs.compute_logreg_hessian(y, tx, initial_w) + 2*lambda_*np.identity(initial_w.shape[0])
+        
+        # Update initial_w and keep the losses into memory
+        initial_w = initial_w - gamma*np.linalg.inv(H).dot(grad)
+        losses.append(loss)
+        
+        # Converge criteria
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
+            break
+    return initial_w, losses[-1]
