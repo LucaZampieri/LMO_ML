@@ -29,28 +29,18 @@ def compute_log_like_reg (y, tx, initial_w,lambda_):
    #find the w tha minimize the log-likehood >>> maximize a priori probability
 def logistic_gradient_descent_reg(y, tx, initial_w,max_iters,gamma,lambda_):
    
-    threshold = 1e-8
-
     if(len(initial_w.shape)==1):
         initial_w=initial_w.reshape(len(initial_w),1);
     if(len(y.shape)==1):
         y=y.reshape(len(y),1);  
     if(len(tx.shape)==1):
         tx=tx.reshape(len(tx),1);  
-    log_like_list=[];
+    
     for j in range(1,max_iters):
-         
+        
+        log_like=compute_log_like_reg(y, tx, initial_w,lambda_);
         if(len(initial_w.shape)==1):
             initial_w=initial_w.reshape(len(initial_w),1);
-             
-                
-        log_like=compute_log_like_reg(y, tx, initial_w,lambda_);
-        log_like_list.append(log_like);
-        if len(log_like_list) > 1 and np.abs(log_like_list[-1] -log_like_list[-2]) < threshold:
-            break
-            
-            
-            
         v=tx.dot(initial_w);
         sigma=np.zeros(v.shape);
         for i in range(0,len(v)):
