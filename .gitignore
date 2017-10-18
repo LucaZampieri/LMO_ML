@@ -3,8 +3,8 @@
 # those containing a dot or between slashes)
 # THIS PART MUST REMAIN AT THE BEGINNING OF .gitignore!
 *
-#!/**/
-#!*.*
+!/**/
+!*.*
 ###########################################################
 
 /project1/data/*
