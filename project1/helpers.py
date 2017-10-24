@@ -41,10 +41,12 @@ def load_data_from_ex02(sub_sample=True, add_outlier=False):
 
 def standardize(x):
     """Standardize the original data set."""
-    mean_x = np.mean(x)
+    mean_x = np.mean(x, axis=0)
     x = x - mean_x
-    std_x = np.std(x)
-    x = x / std_x
+    std_x = np.std(x, axis=0)
+    for idx in range(len(std_x)):
+        if std_x[idx] > 1e-15:
+            x[idx] = x[idx] / std_x[idx]
     return x, mean_x, std_x
 
 
