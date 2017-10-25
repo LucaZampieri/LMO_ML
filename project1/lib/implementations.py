@@ -171,12 +171,14 @@ def reg_logistic_regression_newton(y, tx, lambda_, initial_w, max_iters, gamma):
 def compute_log_like (y, tx, initial_w):
     
   #reashaping: if a vector v(n,) is received this reashape in v(n,1)>>> this permit to work better 
+    '''
     if(len(initial_w.shape)==1):
         initial_w=initial_w.reshape(len(initial_w),1);
     if(len(y.shape)==1):
         y=y.reshape(len(y),1);  
     if(len(tx.shape)==1):
         tx=tx.reshape(len(tx),1); 
+    '''
  
 
  #calculating log_like
@@ -191,22 +193,28 @@ def compute_log_like (y, tx, initial_w):
     
 def logistic_gradient_descent(y, tx, initial_w,max_iters,gamma):
    #reashaping
+    
     threshold = 1e-10
+    '''
     if(len(initial_w.shape)==1):
         initial_w=initial_w.reshape(len(initial_w),1);
     if(len(y.shape)==1):
         y=y.reshape(len(y),1);  
     if(len(tx.shape)==1):
         tx=tx.reshape(len(tx),1);  
+    '''
     log_like_list=[];
+    
+  
     #iterating to find the min
     w_opt=initial_w;
     log_like=0;
     for j in range(1,max_iters):
         
-        
+        '''
         if(len(initial_w.shape)==1):
             initial_w=initial_w.reshape(len(initial_w),1);
+        '''
             
             
         log_like=compute_log_like(y, tx, initial_w);

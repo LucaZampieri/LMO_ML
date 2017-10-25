@@ -33,6 +33,12 @@ def compute_ridge_loss(y, tx, w, lambda_, fct='mse'):
 def compute_logreg_loss(y, tx, w):
     """Compute the cost by negative log likelihood."""
     dot_prod = tx.dot(w)
+    threshold = 100
+    for i,x in enumerate(dot_prod):
+        if x > threshold:
+            dot_prod[i]=threshold
+    
+    print('lalala ',np.max(dot_prod), '  ', np.min(dot_prod) )
     log = np.log(1+np.exp(dot_prod))
     loss = np.ones(len(y)).dot(log) - (y.T.dot(tx)).dot(w)
     
@@ -60,8 +66,21 @@ def compute_logreg_hessian(y, tx, w):
     
     
 # *************************** HELPERS *********************************
-    
+
 def sigmoid(z):
     """Sigmoid function."""
-    result = np.exp(z)/(1+np.exp(z))
+    threshold = -100
+    for i,x in enumerate(z):
+        if x < threshold:
+            z[i]=threshold      
+    result = 1/(1+np.exp(-z))    
+    return result
+
+def sigmoid_old(z):
+    """Sigmoid function."""
+    threshold = 400
+    for i,x in enumerate(z):
+        if x > threshold:
+            z[i]=400      
+    result = np.exp(z)/(1+np.exp(z))    
     return result
