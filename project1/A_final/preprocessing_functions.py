@@ -50,7 +50,7 @@ def add_cross_prod(tx, i, j):
 def add_all_cross_prod(tx):
     sh = tx.shape[1]
     for i in range(sh):
-        #print(i)
+        print(i)
         for j in range(i+1, sh):
             if i != j:
                 tx = add_cross_prod(tx, i, j)
@@ -75,34 +75,44 @@ def add_powers(tx, degree, first_data_id, len_init_data, features='x'):
     
 def add_ones(tx):
     return np.concatenate((tx, np.ones([tx.shape[0],1])), axis=1)
-    
+
+def standardize(x):
+	"""Standardize the original data set."""
+	mean_x = np.mean(x, axis=0)
+	x = x - mean_x
+	std_x = np.std(x, axis=0)
+	for idx in range(len(std_x)):
+		if std_x[idx] > 1e-15:
+			x[idx] = x[idx] / std_x[idx]
+	return x, mean_x, std_x
+
     
 # ---------------- MAIN FUNCTION TO CLEAN DATA ----------------- #
 
 def prepare_data(train_tx, test_tx, deg):
-    #print('Cleaning features')
+    print('Cleaning features')
     train_tx = clean_missing_values(train_tx)[0]
     test_tx = clean_missing_values(test_tx)[0]
     
-    #print('Keeping unique cols')
+    print('Keeping unique cols')
     unique_cols = keep_unique_cols(train_tx)
     train_tx = train_tx[:,unique_cols]
     test_tx = test_tx[:,unique_cols]
     len_kept_data = len(unique_cols)
     
-    #print('Standardizing')
+    print('Standardizing')
     train_tx = standardize(train_tx)[0]
     test_tx = standardize(test_tx)[0]
     
-    #print('Cross products')
+    print('Cross products')
     train_tx = add_all_cross_prod(train_tx)
     test_tx = add_all_cross_prod(test_tx)
     
-    #print('Adding powers')
+    print('Adding powers')
     train_tx = add_powers(train_tx, deg, 0, len_kept_data, 'x')
     test_tx = add_powers(test_tx, deg, 0, len_kept_data, 'x')
     
-    #print('Adding ones')
+    print('Adding ones')
     train_tx = add_ones(train_tx)
     test_tx = add_ones(test_tx)
     
