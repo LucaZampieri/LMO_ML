@@ -37,8 +37,6 @@ def compute_logreg_loss(y, tx, w):
     for i,x in enumerate(dot_prod):
         if x > threshold:
             dot_prod[i]=threshold
-    
-    print('lalala ',np.max(dot_prod), '  ', np.min(dot_prod) )
     log = np.log(1+np.exp(dot_prod))
     loss = np.ones(len(y)).dot(log) - (y.T.dot(tx)).dot(w)
     
