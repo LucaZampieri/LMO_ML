@@ -29,11 +29,14 @@ def keep_unique_cols(tx):
         id_loop = unique_cols_ids
         erase = False
         equal_to = []
-        for j in id_loop:
-            if np.sum(tx[:,i]-tx[:,j])==0:
-                erase = True
-                equal_to.append(j)
-                break
+        
+        erase = len( tx[:,i] ) == len(tx[tx[:,i]==tx[0,i],i])
+        if erase == False:
+            for j in id_loop:
+                if np.sum(tx[:,i]-tx[:,j])==0:
+                    erase = True
+                    equal_to.append(j)
+                    break
         if erase == False:
             unique_cols_ids.append(i)
         #else:
@@ -50,7 +53,6 @@ def add_cross_prod(tx, i, j):
 def add_all_cross_prod(tx):
     sh = tx.shape[1]
     for i in range(sh):
-        print(i)
         for j in range(i+1, sh):
             if i != j:
                 tx = add_cross_prod(tx, i, j)
@@ -107,11 +109,13 @@ def prepare_data(train_tx, test_tx, deg):
     train_tx = clean_missing_values(train_tx)[0]
     test_tx = clean_missing_values(test_tx)[0]
     
+    
     print('Keeping unique cols')
     unique_cols = keep_unique_cols(train_tx)
     train_tx = train_tx[:,unique_cols]
     test_tx = test_tx[:,unique_cols]
     len_kept_data = len(unique_cols)
+ 
     
     print('Cross products')
     train_tx = add_all_cross_prod(train_tx)
