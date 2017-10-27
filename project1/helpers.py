@@ -46,7 +46,7 @@ def standardize(x):
 	std_x = np.std(x, axis=0)
 	for idx in range(len(std_x)):
 		if std_x[idx] > 1e-15:
-			x[idx] = x[idx] / std_x[idx]
+			x[:,idx] = x[:,idx] / std_x[idx]
 	return x, mean_x, std_x
 
 
