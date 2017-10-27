@@ -30,7 +30,7 @@ def keep_unique_cols(tx):
         erase = False
         equal_to = []
         
-        erase = len( tx[:,i] ) == len(tx[tx[:,i]==tx[0,i],i])
+        erase = len(tx[:,i]) == len(tx[tx[:,i]==tx[0,i],i])
         if erase == False:
             for j in id_loop:
                 if np.sum(tx[:,i]-tx[:,j])==0:
@@ -59,25 +59,15 @@ def add_all_cross_prod(tx):
     return tx
     
     
-def build_poly(x, degree):
+def build_poly(x, degree, current_max_deg=1):
     """polynomial basis functions for input data x, for j=1 up to j=degree."""
-    return np.array([x**p for p in range(2,degree+1)]).T 
+    return np.array([x**p for p in range(current_max_deg+1,degree+1)]).T 
     # not range from 0 because we have already added a column of ones, 
     # not range from 1 because we already have the linear features."""
 
-def build_poly_mat(x, degree):
-    """polynomial basis functions for input data x, for j=0 up to j=degree."""
-    # ***************************************************
-    # ***************************************************
-    phi_tilde=x;
-    for i in range(1,degree+1):
-        phi_tilde=np.c_[phi_tilde,np.power(x,i)]
-    return phi_tilde
-    
-    
     
 
-def add_powers(tx, degree, first_data_id, len_init_data, features='x'):
+def add_powers(tx, degree, first_data_id, len_init_data, features='x', current_max_deg=1):
     if features == 'x': # square roots of initial (kept) features
         range_c = range(first_data_id, first_data_id+len_init_data)
     elif features == 'cp': # square roots of cross products
@@ -85,7 +75,7 @@ def add_powers(tx, degree, first_data_id, len_init_data, features='x'):
     else:
         raise NameError('Need to specity x (features) of cp (cross products)')
     for col in range_c: 
-        tx = np.concatenate((tx, build_poly(tx[:,col], degree)), axis=1)
+        tx = np.concatenate((tx, build_poly(tx[:,col], degree, current_max_deg)), axis=1)
     return tx
     
 def add_ones(tx):
@@ -113,7 +103,8 @@ def prepare_data(train_tx, test_tx, deg):
     print('Keeping unique cols')
     unique_cols = keep_unique_cols(train_tx)
     train_tx = train_tx[:,unique_cols]
-    test_tx = test_tx[:,unique_cols]
+    if test_tx.size != 0:
+        test_tx = test_tx[:,unique_cols]
     len_kept_data = len(unique_cols)
  
     
@@ -136,4 +127,4 @@ def prepare_data(train_tx, test_tx, deg):
     train_tx = add_ones(train_tx)
     test_tx = add_ones(test_tx)
     
-    return train_tx, test_tx
+    return train_tx, test_tx, len_kept_data
