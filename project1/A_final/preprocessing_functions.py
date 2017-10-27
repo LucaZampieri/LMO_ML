@@ -56,11 +56,24 @@ def add_all_cross_prod(tx):
                 tx = add_cross_prod(tx, i, j)
     return tx
     
+    
 def build_poly(x, degree):
     """polynomial basis functions for input data x, for j=1 up to j=degree."""
     return np.array([x**p for p in range(2,degree+1)]).T 
     # not range from 0 because we have already added a column of ones, 
-    # not range from 1 because we already have the linear features.
+    # not range from 1 because we already have the linear features."""
+
+def build_poly_mat(x, degree):
+    """polynomial basis functions for input data x, for j=0 up to j=degree."""
+    # ***************************************************
+    # ***************************************************
+    phi_tilde=x;
+    for i in range(1,degree+1):
+        phi_tilde=np.c_[phi_tilde,np.power(x,i)]
+    return phi_tilde
+    
+    
+    
 
 def add_powers(tx, degree, first_data_id, len_init_data, features='x'):
     if features == 'x': # square roots of initial (kept) features
@@ -77,14 +90,14 @@ def add_ones(tx):
     return np.concatenate((tx, np.ones([tx.shape[0],1])), axis=1)
 
 def standardize(x):
-	"""Standardize the original data set."""
-	mean_x = np.mean(x, axis=0)
-	x = x - mean_x
-	std_x = np.std(x, axis=0)
-	for idx in range(len(std_x)):
-		if std_x[idx] > 1e-15:
-			x[idx] = x[idx] / std_x[idx]
-	return x, mean_x, std_x
+    """Standardize the original data set."""
+    mean_x = np.mean(x, axis=0)
+    x = x - mean_x
+    std_x = np.std(x, axis=0)
+    for idx in range(len(std_x)):
+        if std_x[idx] > 1e-15:
+            x[:,idx] = x[:,idx] / std_x[idx]
+    return x, mean_x, std_x
 
     
 # ---------------- MAIN FUNCTION TO CLEAN DATA ----------------- #
@@ -100,17 +113,20 @@ def prepare_data(train_tx, test_tx, deg):
     test_tx = test_tx[:,unique_cols]
     len_kept_data = len(unique_cols)
     
-    print('Standardizing')
-    train_tx = standardize(train_tx)[0]
-    test_tx = standardize(test_tx)[0]
-    
     print('Cross products')
     train_tx = add_all_cross_prod(train_tx)
     test_tx = add_all_cross_prod(test_tx)
+   
     
     print('Adding powers')
-    train_tx = add_powers(train_tx, deg, 0, len_kept_data, 'x')
-    test_tx = add_powers(test_tx, deg, 0, len_kept_data, 'x')
+    train_tx=add_powers(train_tx, deg, 0, len_kept_data, features='x');
+    test_tx=add_powers(test_tx, deg,  0, len_kept_data, features='x');
+    
+   
+   
+    print('Standardizing')
+    train_tx = standardize(train_tx)[0]
+    test_tx = standardize(test_tx)[0]
     
     print('Adding ones')
     train_tx = add_ones(train_tx)
