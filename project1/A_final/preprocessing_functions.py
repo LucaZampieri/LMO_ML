@@ -95,35 +95,34 @@ def standardize(x):
 # ---------------- MAIN FUNCTION TO CLEAN DATA ----------------- #
 
 def prepare_data(train_tx, test_tx, deg):
-    print('Cleaning features')
+    #print('Cleaning features')
     train_tx = clean_missing_values(train_tx)[0]
     test_tx = clean_missing_values(test_tx)[0]
     
     
-    print('Keeping unique cols')
+    #print('Keeping unique cols')
     unique_cols = keep_unique_cols(train_tx)
     train_tx = train_tx[:,unique_cols]
     if test_tx.size != 0:
         test_tx = test_tx[:,unique_cols]
     len_kept_data = len(unique_cols)
  
+ 
+    #print('Standardizing')
+    train_tx = standardize(train_tx)[0]
+    test_tx = standardize(test_tx)[0]
     
-    print('Cross products')
+    #print('Cross products')
     train_tx = add_all_cross_prod(train_tx)
     test_tx = add_all_cross_prod(test_tx)
    
     
-    print('Adding powers')
+    #print('Adding powers')
     train_tx=add_powers(train_tx, deg, 0, len_kept_data, features='x');
     test_tx=add_powers(test_tx, deg,  0, len_kept_data, features='x');
     
-   
-   
-    print('Standardizing')
-    train_tx = standardize(train_tx)[0]
-    test_tx = standardize(test_tx)[0]
     
-    print('Adding ones')
+    #print('Adding ones')
     train_tx = add_ones(train_tx)
     test_tx = add_ones(test_tx)
     
