@@ -6,10 +6,10 @@
 The code is organized according to the following structure: 
 
 1) “main.ipynb” : it runs also the function for the project including the pre-processing:
-
-
-    *** description of the functions in the main*** 
-
+    
+   This code is structured in the following 
+   
+   Each method considered in “implementations.py” is implemented considered the following scheme: 
 
 2) Inside folder “lib” :
 
@@ -23,6 +23,8 @@ A - “implementations.py”: inside this file the following function are implem
 
     - logistic regression(y, tx, initial w, max iters, gamma).  >>>. Logistic regression using gradient descent or SGD
     - reg logistic regression(y, tx, lambda , initial w, max iters, gamma)  >>Regularized logistic regression using gradient descent or SGD 
+
+
 
 
 B - “costs.py”: it contains all the loss functions: 
@@ -67,7 +69,38 @@ B - “costs.py”: it contains all the loss functions:
 
 
 
-4) “preprocessing_functions.py” : I
+4) “preprocessing_functions.py” : ########SPIEGARE FUNZIONI
+
+
+
+1) “main.ipynb” : it runs all the functions for the project including the pre-processing.
+    
+   This code is structured in the following way:
+
+   - load_csv_data : load the data from “.csv” file. 
+
+   - panda library is used to show the data in a table 
+
+
+   - func_(method) : it calls the method and visualize to standard output the plot of the weights including the accuracy; 
+
+         func_least_squares 	>>>>> least_square
+         func_GD            	>>>>>> gradient descent 
+         func_SGD           	>>>>>> stochastic gradient descent
+         func_ridge_regression   >>>>> ridge regression 
+         func_logistic      	>>>>>> logistic_regression 
+         func_logistic_reg  	>>>>>>. Regularized logistic regression
+         
+    
+   - cross_validation_method: It performs the cross validation on the interesting parameters  for the specific “method”. 
+                              In the cross validation on the degree of the input matrix:  ########SPIEGARE COME FA 
+
+   
+   - Each method considered in “implementations.py” is implemented with the following scheme:
+   
+       for each method the algorithm realizes the division of the training set in 4 jets. Cycling on each jet , the cross_validation returns the best interesting parameters 
+    
+    
 
 
 
