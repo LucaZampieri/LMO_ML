@@ -107,10 +107,7 @@ def prepare_data(train_tx, test_tx, deg):
         test_tx = test_tx[:,unique_cols]
     len_kept_data = len(unique_cols)
  
- 
-    #print('Standardizing')
-    train_tx = standardize(train_tx)[0]
-    test_tx = standardize(test_tx)[0]
+
     
     #print('Cross products')
     train_tx = add_all_cross_prod(train_tx)
@@ -120,6 +117,10 @@ def prepare_data(train_tx, test_tx, deg):
     #print('Adding powers')
     train_tx=add_powers(train_tx, deg, 0, len_kept_data, features='x');
     test_tx=add_powers(test_tx, deg,  0, len_kept_data, features='x');
+    
+    #print('Standardizing')
+    train_tx = standardize(train_tx)[0]
+    test_tx = standardize(test_tx)[0]
     
     
     #print('Adding ones')
