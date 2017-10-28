@@ -5,14 +5,17 @@
 
 The code is organized according to the following structure: 
 
-1) “main.ipynb” : it runs also the function for the project including the pre-processing;
+1) “main.ipynb” : it runs also the function for the project including the pre-processing:
+
+
+    *** description of the functions in the main*** 
 
 
 2) Inside folder “lib” :
 
 
 
-A- “implementations.py”: inside this file the following function are implemented:
+A - “implementations.py”: inside this file the following function are implemented:
 
     - least squares GD(y, tx, initial w, max iters, gamma) >>    Linear regression using gradient descent
     - least squares SGD(y, tx, initial w, max iters, gamma) >>   Linear regression using stochastic gradient descent    - least squares(y, tx)   >>>.  Least squares regression using normal equations Ridge regression using normal equations
@@ -22,14 +25,33 @@ A- “implementations.py”: inside this file the following function are impleme
     - reg logistic regression(y, tx, lambda , initial w, max iters, gamma)  >>Regularized logistic regression using gradient descent or SGD 
 
 
-B- “costs.py”: it contains all the loss functions: 
+B - “costs.py”: it contains all the loss functions: 
    
 
     - compute_loss(y, tx, w, fct): for a given tx input data and weights vector w , this function computes three kind of loss:  - MSE  between y and the predicted vector tx.dot(w) if “fct==mse”
  																- MAE : if “fct==mae”
 																- RMSE : if “fct==rmse”  
 
-    - compute_ridge_loss(y, tx, w, lambda_, fct='mse'):
+    - compute_ridge_loss(y, tx, w, lambda_, fct='mse'): for a given tx input data and weights vector w , it returns the regularized mse or rmse (depending on fct parameter) for a given lambda. Used in 	ridge 	regression.
+
+
+    - compute_logreg_loss(y, tx, w): for a given tx input data and weights vector w , it returns the log-likely-hood; 
+
+
+    - compute_gradient(y, tx, w, fct='mse’): Compute the gradient of the MSE, MAE or the logistic regression losses.
+
+    
+    - compute_logreg_hessian(y, tx, w):  Compute the hessian of the logistic regression loss function ( used for with the newton method)
+
+  
+    - sigmoid(z): it computes the sigmoid function for a given vector z; 
+ 
+
+
+
+   
+    
+   
    
       
 
@@ -40,6 +62,12 @@ B- “costs.py”: it contains all the loss functions:
     - predict_labels(weights, data): it predicts the output ( classification ) from “data” for a given vector of weights.
    
     - create_csv_submission(ids, y_pred, name): for a given vector of predictions “y_pred” , ids? , this function create .csv file with path “name”.
+
+
+
+
+
+4) “preprocessing_functions.py” : I
 
 
 

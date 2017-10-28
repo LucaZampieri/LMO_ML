@@ -33,7 +33,7 @@ def keep_unique_cols(tx):
         erase = len(tx[:,i]) == len(tx[tx[:,i]==tx[0,i],i])
         if erase == False:
             for j in id_loop:
-                if np.sum(tx[:,i]-tx[:,j])==0:
+                if np.sum(np.abs(tx[:,i]-tx[:,j]))==0:
                     erase = True
                     equal_to.append(j)
                     break
@@ -45,7 +45,8 @@ def keep_unique_cols(tx):
     index = np.argwhere(unique_cols_ids==22)
     unique_cols_ids = np.delete(unique_cols_ids, index)
     
-    return unique_cols_ids
+    return unique_cols_ids          
+
     
 def add_cross_prod(tx, i, j):
     return np.concatenate((tx, np.array([tx[:,i]*tx[:,j]]).T), axis=1)
