@@ -37,17 +37,17 @@ def load_data_from_ex02(sub_sample=True, add_outlier=False):
         weight = np.concatenate([weight, [51.5/0.454, 55.3/0.454]])
 
     return height, weight, gender
-
+    
 
 def standardize(x):
-	"""Standardize the original data set."""
-	mean_x = np.mean(x, axis=0)
-	x = x - mean_x
-	std_x = np.std(x, axis=0)
-	for idx in range(len(std_x)):
-		if std_x[idx] > 1e-15:
-			x[:,idx] = x[:,idx] / std_x[idx]
-	return x, mean_x, std_x
+    """Standardize the data set x."""
+    # Compute the mean for each column
+    mean_x = np.mean(x, axis=0)
+    x = x - mean_x
+    # Compute the standard deviation for each column
+    std_x = np.std(x, axis=0)
+    x = x / std_x
+    return np.array(x), mean_x, std_x
 
 
 def build_model_data(height, weight):

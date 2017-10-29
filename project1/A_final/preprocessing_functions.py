@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np 
+from helpers import *
 
 def split_jets_mask(tx):
+    """Creates a mask from array tx corresponding to feature 22 (number of jets)."""
     idx_cat = 22
     return {
         0: tx[:,idx_cat] == 0,
@@ -10,122 +12,105 @@ def split_jets_mask(tx):
         2: tx[:,idx_cat] == 2,
         3: tx[:,idx_cat] == 3,
     }
+
+def clean_missing_values(tx, mean=False):
+    """Replace missing values (-999) of tx by the mean (if mean==True) or by the median (if mean==False) of the 
+       column in which the missing value belongs.
+       Returns the modified matrix and a matrix similar to tx but with 1 instead of -999 and 0 otherwise."""
     
-def clean_missing_values(tx):
     nan_values = (tx==-999)*1
     for col in range(tx.shape[1]):
+        # Select entries of col that have values -999
         column = tx[:,col][tx[:,col]!=-999]
-        if len(column) == 0:
-            median = 0
-        else:
-            median = np.median(column)
-        tx[:,col][tx[:,col]==-999] = median
+        
+        # If the column col contains missing values, replace them by the median or the mean
+        if len(column) != 0:
+            if mean==False:
+                replace_value = np.median(column)
+            else:
+                replace_value = np.mean(column)
+            tx[:,col][tx[:,col]==-999] = replace_value
+            
     return tx, nan_values
     
 def keep_unique_cols(tx):
-    # If two (or more) columns of tx are equal, keep only one of them
+    """Input: matrix tx. If two (or more) columns of tx are equal, keep only one of them.
+       If a column has all of its entries identical, do not keep it (it will be replaced by the column of 1s).
+       Returns the indices of the kept columns."""
+
     unique_cols_ids = [0]
     for i in range(1,tx.shape[1]):
-        id_loop = unique_cols_ids
-        erase = False
-        equal_to = []
+        # Check if all entries of column i are identical
+        erase = np.sum((tx[:,i]==tx[0,i])*1)==len(tx[:,i]) 
         
-        erase = len(tx[:,i]) == len(tx[tx[:,i]==tx[0,i],i])
-        if erase == False:
+        # If all entries are not identical, check if the column is equal to another one amongst the 
+        # already chosen columns
+        if erase == False: 
+            id_loop = unique_cols_ids
             for j in id_loop:
-                if np.sum(np.abs(tx[:,i]-tx[:,j]))==0:
+                if np.sum(tx[:,i]-tx[:,j])==0:
                     erase = True
-                    equal_to.append(j)
                     break
-        if erase == False:
+                    
+        # If the column is not equal to another one, nor it has all identical entries, keep it
+        if erase == False: 
             unique_cols_ids.append(i)
-        #else:
-        #    print('column', i, 'deleted because equal to column(s) ', equal_to)
-            
-    index = np.argwhere(unique_cols_ids==22)
-    unique_cols_ids = np.delete(unique_cols_ids, index)
     
-    return unique_cols_ids          
-
-    
+    return unique_cols_ids
+ 
 def add_cross_prod(tx, i, j):
+    """Add a column to tx correponding to the product of the entries of the i-th and j-th columns."""
     return np.concatenate((tx, np.array([tx[:,i]*tx[:,j]]).T), axis=1)
 
-def add_all_cross_prod(tx):
-    sh = tx.shape[1]
-    for i in range(sh):
-        for j in range(i+1, sh):
-            if i != j:
-                tx = add_cross_prod(tx, i, j)
+def add_all_cross_prod(tx, selected_cols=[]):
+    """Add all products between 2 products"""
+    if selected_cols==[]:
+        selected_cols=range(tx.shape[1])
+    for idx, i in enumerate(selected_cols):
+        #print(idx)
+        for j in selected_cols[idx+1:]:
+            tx = add_cross_prod(tx, i, j)
     return tx
-    
-    
-def build_poly(x, degree, current_max_deg=1):
-    """polynomial basis functions for input data x, for j=1 up to j=degree."""
-    return np.array([x**p for p in range(current_max_deg+1,degree+1)]).T 
-    # not range from 0 because we have already added a column of ones, 
-    # not range from 1 because we already have the linear features."""
 
-    
-
-def add_powers(tx, degree, first_data_id, len_init_data, features='x', current_max_deg=1):
-    if features == 'x': # square roots of initial (kept) features
-        range_c = range(first_data_id, first_data_id+len_init_data)
-    elif features == 'cp': # square roots of cross products
-        range_c = range(first_data_id, first_data_id+(len_init_data*(len_init_data-1))/2)
-    else:
-        raise NameError('Need to specity x (features) of cp (cross products)')
-    for col in range_c: 
-        tx = np.concatenate((tx, build_poly(tx[:,col], degree, current_max_deg)), axis=1)
-    return tx
-    
 def add_ones(tx):
+    """Add a column of 1s to matrix tx."""
     return np.concatenate((tx, np.ones([tx.shape[0],1])), axis=1)
-
-def standardize(x):
-    """Standardize the original data set."""
-    mean_x = np.mean(x, axis=0)
-    x = x - mean_x
-    std_x = np.std(x, axis=0)
-    for idx in range(len(std_x)):
-        if std_x[idx] > 1e-15:
-            x[:,idx] = x[:,idx] / std_x[idx]
-    return x, mean_x, std_x
-
     
-# ---------------- MAIN FUNCTION TO CLEAN DATA ----------------- #
-
-def prepare_data(train_tx, test_tx, deg):
+def preprocess_data(tx, unique_cols=[], stdize="before"):
     #print('Cleaning features')
-    train_tx = clean_missing_values(train_tx)[0]
-    test_tx = clean_missing_values(test_tx)[0]
-    
+    tx, nan_values = clean_missing_values(tx)
+    np.append(tx, nan_values[:,0]) # Add dummy variable to keep the information saying when the mass is -999 or not
     
     #print('Keeping unique cols')
-    unique_cols = keep_unique_cols(train_tx)
-    train_tx = train_tx[:,unique_cols]
-    if test_tx.size != 0:
-        test_tx = test_tx[:,unique_cols]
+    if unique_cols==[]:
+        unique_cols = keep_unique_cols(tx)
+    tx = tx[:,unique_cols]
     len_kept_data = len(unique_cols)
- 
-
     
-    #print('Cross products')
-    train_tx = add_all_cross_prod(train_tx)
-    test_tx = add_all_cross_prod(test_tx)
-   
+    if stdize=='before':
+        #print('Standardizing')
+        tx = standardize(tx)[0]
     
-    #print('Adding powers')
-    train_tx=add_powers(train_tx, deg, 0, len_kept_data, features='x');
-    test_tx=add_powers(test_tx, deg,  0, len_kept_data, features='x');
+    # print('Cross products')
+    tx = add_all_cross_prod(tx)
     
-    #print('Standardizing')
-    train_tx = standardize(train_tx)[0]
-    test_tx = standardize(test_tx)[0]
-    
+    if stdize=='after':
+        #print('Standardizing')
+        tx = standardize(tx)[0]
     
     #print('Adding ones')
-    train_tx = add_ones(train_tx)
-    test_tx = add_ones(test_tx)
+    tx = add_ones(tx)
+
+    return tx, len_kept_data, unique_cols
     
-    return train_tx, test_tx, len_kept_data
+def build_poly(x, range_degrees):
+    """Polynomial basis functions for input array data x."""
+    return np.array([x**p for p in range_degrees]).T 
+    
+def add_powers(tx, range_degrees, range_col_idx):
+    if len(range_degrees)>0:
+        for col_id in range_col_idx:
+            tx = np.concatenate((tx, build_poly(tx[:,col_id], range_degrees)), axis=1)
+    return tx
+    
+
