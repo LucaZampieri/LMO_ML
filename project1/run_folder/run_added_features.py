@@ -150,7 +150,7 @@ def eliminate_columns(df):
     
     return np.delete(df, phis_column, axis=1)
 
-def prepare_data(train_tx, test_tx, deg):
+def prepare_data(train_tx, test_tx, deg, jet_id):
     #print('Delete phi columns')
     #train_tx = eliminate_columns(train_tx)
     #test_tx = eliminate_columns(test_tx)
@@ -181,17 +181,19 @@ def prepare_data(train_tx, test_tx, deg):
     train_tx = add_square_roots(train_tx, 0, len_kept_data)
     test_tx = add_square_roots(test_tx, 0, len_kept_data)
     
-    """print('Adding log(1+|x|)')
-    train_tx = add_log_abs(train_tx, 0, len_kept_data)
-    test_tx = add_log_abs(test_tx, 0, len_kept_data)"""
+    if jet_id == 1:
+        print('Adding log(1+|x|)')
+        train_tx = add_log_abs(train_tx, 0, len_kept_data)
+        test_tx = add_log_abs(test_tx, 0, len_kept_data)
+    else:
+        print('Adding log(1+x^2)')
+        train_tx = add_log_square(train_tx, 0, len_kept_data)
+        test_tx = add_log_square(test_tx, 0, len_kept_data)
     
-    print('Adding log(1+x^2)')
-    train_tx = add_log_square(train_tx, 0, len_kept_data)
-    test_tx = add_log_square(test_tx, 0, len_kept_data)
-    
-    """print('Adding gaussian')
-    train_tx = add_gaussian(train_tx, 0, len_kept_data)
-    test_tx = add_gaussian(test_tx, 0, len_kept_data)"""
+    if jet_id > 1:
+        print('Adding gaussian')
+        train_tx = add_gaussian(train_tx, 0, len_kept_data)
+        test_tx = add_gaussian(test_tx, 0, len_kept_data)
     
     print('Adding ones')
     train_tx = add_ones(train_tx)
@@ -200,10 +202,10 @@ def prepare_data(train_tx, test_tx, deg):
     return train_tx, test_tx
 
 
-def cleaned_ridge_regression_pred(single_degree, single_lambda, single_train_tx, single_test_tx, \
+def cleaned_ridge_regression_pred(jet_id, single_degree, single_lambda, single_train_tx, single_test_tx, \
                                   single_train_y, single_test_y=[], predictions=True):
     # Clean and prepare data 
-    single_train_tx, single_test_tx = prepare_data(single_train_tx, single_test_tx, single_degree)
+    single_train_tx, single_test_tx = prepare_data(single_train_tx, single_test_tx, single_degree, jet_id)
 
     # Compute the weights with ridge regression
     weights = ridge_regression(single_train_y, single_train_tx, single_lambda)
@@ -245,10 +247,12 @@ def ridge_regression_all_jets_pred(full_tx_train, full_tx_test, full_y_train, de
         len_jets_train[mask_jet_id] = len(y_single_jet_train)
         
         y_pred_train[mask_jets_train[mask_jet_id]], y_pred_test[mask_jets_test[mask_jet_id]], \
-            accuracy_train[mask_jet_id] = cleaned_ridge_regression_pred(degrees[mask_jet_id], lambdas[mask_jet_id], \
+            accuracy_train[mask_jet_id] = cleaned_ridge_regression_pred(mask_jet_id, degrees[mask_jet_id], lambdas[mask_jet_id], \
                                                                         tx_single_jet_train, tx_single_jet_test, \
                                                                         y_single_jet_train, [], predictions=True)
     
+        print('>>> Accuracy train jet', mask_jet_id, '=', accuracy_train[mask_jet_id])
+        
     full_accuracy_train = \
         np.sum([accuracy_train[id]*len_jets_train[id] for id in range(len_mask)])/len(full_y_train)
         
@@ -262,7 +266,6 @@ def ridge_regression_all_jets_pred(full_tx_train, full_tx_test, full_y_train, de
 DATA_FOLDER = '../data/' #######
 
 y_train, tx_train, ids_train = load_csv_data(DATA_FOLDER+'train.csv',sub_sample=False)
-
 y_test, tx_test, ids_test = load_csv_data(DATA_FOLDER+'test.csv',sub_sample=False)
 
 
