@@ -85,7 +85,7 @@ The .zip folder is organized according to the following structure:
 
 4) “All_methods.ipynb” : it runs all the functions not-optimized for the project including the pre-processing.
     
-   This main functions used in this code are the following:
+   This functions used in this code are the following:
 
    - load_csv_data : load the data from “.csv” file;
 
@@ -99,6 +99,9 @@ The .zip folder is organized according to the following structure:
          func_ridge_regression   >>>>> ridge regression 
          func_logistic      	>>>>>> logistic_regression 
          func_logistic_reg  	>>>>>>. Regularized logistic regression
+
+
+   - build_k_indices(y, k_fold, seed): it returns a vector of indexes for creating k-folders.  
          
     
    - cross_validation_method: It performs the cross validation on the interesting parameters  for the specific “method” for a specific input training set (we use for the single jet).
@@ -111,6 +114,8 @@ The .zip folder is organized according to the following structure:
 
    -cross_validation_one_fold_method: Basically this perform a “for cycle” for each parameter we want to optimize. It returns a n-dimensional matrix of accuracies, where n is the number of 
 					tuning parameters.
+
+   
 					
                            
 
@@ -143,8 +148,42 @@ The .zip folder is organized according to the following structure:
 
 
 
+5) Inside “run_folder” there is the optimized version of the code. As reported in the paper we select RIDGE REGRESSION. 
+    The structure of this code is very similar to the one reported above apart from the fact that the functions are optimized in terms of computational effort.
 
-5) Inside “run_folder” there is the optimized version of the code. As reported in the paper we select RIDGE REGRESSION. We  have 
+   This functions used in this code are the following:
+
+    FOR PRE-PROCESSING:
+	 
+    	- split_jets_mask(tx): it split tx in different jets according to jet column;
+
+    	- clean_missing_values(tx, mean=False): it cleans the “-999” and replace them with the median of the column;
+
+    	- keep_unique_cols(tx): it removes the  equal columns to get a full ranked training matrix; 
+  
+    	- add_cross_prod(tx, i, j): it adds a column to tx with the cross product of i-th and j-th column;
+
+    	- add_all_cross_prod(tx, selected_cols): it calls add_cross_prod(tx, i, j) for each column in “selected_cols”;
+
+    	- add_ones(tx): add a column of ones;
+
+    	- prepare data: it runs all the functions above according to a predefinitenite scheme;
+ 
+    	- add_powers(tx, range_degrees, range_col_idx): it adds to matrix “tx”  the columns referred in “range_col_idx” powered for each degree contained in “range_degrees”. 
+
+
+    - cleaned_ridge_regression_pred(single_degree, single_lambda, single_train_tx, single_test_tx, single_train_y, single_test_y=[], predictions=True):
+
+
+    - ridge_regression_all_jets_pred(full_tx_train, full_tx_test, full_y_train, degrees, lambdas): it divides the dataset into 
+
+
+    -cross_validation_single_jet_ridge_regression:	
+
+
+
+
+	
 
 
 	
