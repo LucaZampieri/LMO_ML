@@ -8,6 +8,11 @@ from helpers import *
 # splitting dataset into jets
 
 def split_jets_mask(tx):
+    """ Split the dataset into four, one for each 
+    values of PRI_jet_num column
+    input: the dataset
+    output: a list of masks
+    """
     idx_cat = 22
     return {
         0: tx[:,idx_cat] == 0,
@@ -19,9 +24,12 @@ def split_jets_mask(tx):
 
 
 
-# cleaning -999 and replacing them with the median of the column
+# 
 
 def clean_missing_values(tx):
+    """ 
+    replacing -999  with the median of the column
+    """
     nan_values = (tx==-999)*1
     for col in range(tx.shape[1]):
         column = tx[:,col][tx[:,col]!=-999]
@@ -37,6 +45,10 @@ def clean_missing_values(tx):
 # the unique columns are mantained, if there is two equal columns the second is removed
 
 def keep_unique_cols(tx):
+    """
+    Remove duplicaets columns or columns that
+    are 
+    """
     # If two (or more) columns of tx are equal, keep only one of them
     unique_cols_ids = [0]
     for i in range(1,tx.shape[1]):
