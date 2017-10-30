@@ -3,7 +3,7 @@
 
 def cleaned_ridge_regression_pred(single_degree, single_lambda, single_train_tx, single_test_tx, \
                                   single_train_y, single_test_y=[], predictions=True):
-    # Clean and prepare data !!!!!!!!!TODO!!!!!!!!!! NOT HERE WOULD BE MORE EFFICIENT.......
+    # Clean and prepare data
     single_train_tx, single_test_tx = prepare_data(single_train_tx, single_test_tx, single_degree)
     
     # Compute the weights with ridge regression

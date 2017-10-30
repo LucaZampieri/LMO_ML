@@ -63,7 +63,7 @@ print(y_pred_test[0:200])
 
 
 
-name = 'output/ridge_regression_ondine_splitjet_2.csv'
+name = 'output/ridge_regression_ondine_splitjet_test.csv'
 create_csv_submission(ids_test, y_pred_test, name)
 
 

@@ -38,8 +38,8 @@ def cross_validation_single_jet_single_param_ridge_regression(single_jet_y, sing
             cleaned_ridge_regression_pred(single_degree, single_lambda, train_tx, test_tx, train_y, test_y, \
                                           predictions=False)
 
-return np.mean(accuracy_train), np.mean(accuracy_test), np.var(accuracy_train), np.var(accuracy_test), \
-    np.min(accuracy_train), np.min(accuracy_test), np.max(accuracy_train), np.max(accuracy_test)
+    return np.mean(accuracy_train), np.mean(accuracy_test), np.var(accuracy_train), np.var(accuracy_test), \
+        np.min(accuracy_train), np.min(accuracy_test), np.max(accuracy_train), np.max(accuracy_test)
 
 
 
@@ -66,14 +66,14 @@ def cross_validation_single_jet_ridge_regression(degrees, lambdas, y_single_jet_
                 cross_validation_single_jet_single_param_ridge_regression(y_single_jet_train, tx_single_jet_train, \
                                                                           k_fold, seed, single_degree, single_lambda)
 
-max_id_deg, max_id_lambda = np.unravel_index(mean_acc_cv_test.argmax(), mean_acc_cv_test.shape)
-print('Best mean accuracy: ', mean_acc_cv_test[max_id_deg, max_id_lambda])
-print('attained with degree =', degrees[max_id_deg], 'and lambda =', lambdas[max_id_lambda])
-plot_accuracy_evolution(degrees, lambdas, mean_acc_cv_train, mean_acc_cv_test, var_acc_cv_train, var_acc_cv_test)
+    max_id_deg, max_id_lambda = np.unravel_index(mean_acc_cv_test.argmax(), mean_acc_cv_test.shape)
+    print('Best mean accuracy: ', mean_acc_cv_test[max_id_deg, max_id_lambda])
+    print('attained with degree =', degrees[max_id_deg], 'and lambda =', lambdas[max_id_lambda])
+    plot_accuracy_evolution(degrees, lambdas, mean_acc_cv_train, mean_acc_cv_test, var_acc_cv_train, var_acc_cv_test)
 
-if returnAll == True:
-    return degrees[max_id_deg], lambdas[max_id_lambda], mean_acc_cv_train, mean_acc_cv_test, var_acc_cv_train, \
-        var_acc_cv_test, min_acc_cv_train, min_acc_cv_test, max_acc_cv_train, max_acc_cv_test
+    if returnAll == True:
+        return degrees[max_id_deg], lambdas[max_id_lambda], mean_acc_cv_train, mean_acc_cv_test, var_acc_cv_train, \
+            var_acc_cv_test, min_acc_cv_train, min_acc_cv_test, max_acc_cv_train, max_acc_cv_test
     else:
         return degrees[max_id_deg], lambdas[max_id_lambda], mean_acc_cv_train[max_id_deg, max_id_lambda], \
             mean_acc_cv_test[max_id_deg, max_id_lambda]

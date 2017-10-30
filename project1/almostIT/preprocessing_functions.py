@@ -51,10 +51,10 @@ def keep_unique_cols(tx):
         if erase == False:
             unique_cols_ids.append(i)
     #else:
-#    print('column', i, 'deleted because equal to column(s) ', equal_to)
+    #    print('column', i, 'deleted because equal to column(s) ', equal_to)
 
-index = np.argwhere(unique_cols_ids==22)
-unique_cols_ids = np.delete(unique_cols_ids, index)
+    index = np.argwhere(unique_cols_ids==22)
+    unique_cols_ids = np.delete(unique_cols_ids, index)
 
     return unique_cols_ids
 
