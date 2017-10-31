@@ -1,7 +1,0 @@
-1) selecting which features has to be kept which have to be discarded. using least square.
-
-2) cross_validation on the creation of matrix phi
-
-3) pre processing of data
-
-4) uploading a final version 
