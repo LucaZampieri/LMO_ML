@@ -5,3 +5,8 @@ project1/A_final/output/
 project1/A_final/data/
 project1/A_final/__pycache__/
 project1/A_final/.ipynb_checkpoints/
+
+project2/project_road_segmentation/training/
+project2/project_road_segmentation/test_set_images/
+
+project2/project_road_segmentation/.ipynb_checkpoints/
