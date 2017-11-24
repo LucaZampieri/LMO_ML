@@ -81,7 +81,7 @@ def extract_data(filename, num_images):
     data = [img_patches[i][j] for i in range(len(img_patches)) for j in range(len(img_patches[i]))]
 
     return numpy.asarray(data)
-
+        
 # Assign a label to a patch v
 def value_to_class(v):
     foreground_threshold = 0.25 # percentage of pixels > 1 required to assign a foreground label to a patch
@@ -164,7 +164,7 @@ def concatenate_images(img, gt_img):
         cimg = numpy.concatenate((img, gt_img), axis=1)
     else:
         gt_img_3c = numpy.zeros((w, h, 3), dtype=numpy.uint8)
-        gt_img8 = img_float_to_uint8(gt_img)
+        gt_img8 = img_float_to_uint8(gt_img)          
         gt_img_3c[:,:,0] = gt_img8
         gt_img_3c[:,:,1] = gt_img8
         gt_img_3c[:,:,2] = gt_img8
@@ -189,7 +189,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     data_dir = 'training/'
     train_data_filename = data_dir + 'images/'
-    train_labels_filename = data_dir + 'groundtruth/'
+    train_labels_filename = data_dir + 'groundtruth/' 
 
     # Extract it into numpy arrays.
     train_data = extract_data(train_data_filename, TRAINING_SIZE)
@@ -276,7 +276,7 @@ def main(argv=None):  # pylint: disable=unused-argument
         V = tf.transpose(V, (2, 0, 1))
         V = tf.reshape(V, (-1, img_w, img_h, 1))
         return V
-
+    
     # Make an image summary for 3d tensor image with index idx
     def get_image_summary_3d(img):
         V = tf.slice(img, (0, 0, 0), (1, -1, -1))
@@ -287,7 +287,7 @@ def main(argv=None):  # pylint: disable=unused-argument
         V = tf.reshape(V, (-1, img_w, img_h, 1))
         return V
 
-    # Get prediction for given input image
+    # Get prediction for given input image 
     def get_prediction(img):
         data = numpy.asarray(img_crop(img, IMG_PATCH_SIZE, IMG_PATCH_SIZE))
         data_node = tf.constant(data)
@@ -392,9 +392,8 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Training computation: logits + cross-entropy loss.
     logits = model(train_data_node, True) # BATCH_SIZE*NUM_LABELS
     # print 'logits = ' + str(logits.get_shape()) + ' train_labels_node = ' + str(train_labels_node.get_shape())
-    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-        logits, train_labels_node))
-    tf.scalar_summary('loss', loss)
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = logits, labels = train_labels_node))
+    tf.summary.scalar('loss', loss)
 
     all_params_node = [conv1_weights, conv1_biases, conv2_weights, conv2_biases, fc1_weights, fc1_biases, fc2_weights, fc2_biases]
     all_params_names = ['conv1_weights', 'conv1_biases', 'conv2_weights', 'conv2_biases', 'fc1_weights', 'fc1_biases', 'fc2_weights', 'fc2_biases']
@@ -403,8 +402,8 @@ def main(argv=None):  # pylint: disable=unused-argument
     for i in range(0, len(all_grads_node)):
         norm_grad_i = tf.global_norm([all_grads_node[i]])
         all_grad_norms_node.append(norm_grad_i)
-        tf.scalar_summary(all_params_names[i], norm_grad_i)
-
+        tf.summary.scalar(all_params_names[i], norm_grad_i)
+    
     # L2 regularization for the fully connected parameters.
     regularizers = (tf.nn.l2_loss(fc1_weights) + tf.nn.l2_loss(fc1_biases) +
                     tf.nn.l2_loss(fc2_weights) + tf.nn.l2_loss(fc2_biases))
@@ -421,8 +420,8 @@ def main(argv=None):  # pylint: disable=unused-argument
         train_size,          # Decay step.
         0.95,                # Decay rate.
         staircase=True)
-    tf.scalar_summary('learning_rate', learning_rate)
-
+    tf.summary.scalar('learning_rate', learning_rate)
+    
     # Use simple momentum for the optimization.
     optimizer = tf.train.MomentumOptimizer(learning_rate,
                                            0.0).minimize(loss,
@@ -450,9 +449,10 @@ def main(argv=None):  # pylint: disable=unused-argument
             tf.initialize_all_variables().run()
 
             # Build the summary operation based on the TF collection of Summaries.
-            summary_op = tf.merge_all_summaries()
-            summary_writer = tf.train.SummaryWriter(FLAGS.train_dir,
+            summary_op = tf.summary.merge_all()
+            summary_writer = tf.summary.FileWriter(FLAGS.train_dir,
                                                     graph_def=s.graph_def)
+            #  tf.train.summary.FileWriter(FLAGS.train_dir, ... was the previous version
             print ('Initialized!')
             # Loop through training steps.
             print ('Total number of iterations = ' + str(int(num_epochs * train_size / BATCH_SIZE)))
@@ -514,7 +514,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             pimg = get_prediction_with_groundtruth(train_data_filename, i)
             Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
             oimg = get_prediction_with_overlay(train_data_filename, i)
-            oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")
+            oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")       
 
 if __name__ == '__main__':
     tf.app.run()
