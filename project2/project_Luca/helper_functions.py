@@ -13,27 +13,17 @@ import code
 import numpy
 
 
-
-
-
+# ################################ Variables ##################
 NUM_CHANNELS = 3 # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2  # 0 or 1
-TRAINING_SIZE = 10
-VALIDATION_SIZE = 5  # Size of the validation set.
-SEED = 50  # Set to None for random seed.
-BATCH_SIZE = 16 # 64
-NUM_EPOCHS = 3 # how many as you like
-RESTORE_MODEL = False # If True, restore existing model instead of training a new one
-RECORDING_STEP = 10
-TEST = False  # if we want to predict test image as well
-TESTING_SIZE = 50 # number of test images i.e. 50
-#VALIDATION = False # not used for the moment, you can delete it
 
 # Set image patch size in pixels
 # IMG_PATCH_SIZE should be a multiple of 4
 # image size should be an integer multiple of this number!
 IMG_PATCH_SIZE = 16
+
+
 
 # Extract patches from a given image
 def img_crop(im, w, h):
