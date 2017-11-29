@@ -30,50 +30,24 @@ from helper_functions import *
 
 
 
-tf.app.flags.DEFINE_string('train_dir', '/tmp/mnist/test7',
+tf.app.flags.DEFINE_string('train_dir', '/tmp/mnist/test1',
                            """Directory where to write event logs """
                            """and checkpoint.""")
 FLAGS = tf.app.flags.FLAGS
 
 ################################################################################
-
+TRAINING_SIZE = 10
+VALIDATION_SIZE = 5  # Size of the validation set.
+SEED = 50  # Set to None for random seed.
+BATCH_SIZE = 16 # 64
+NUM_EPOCHS = 4 # how many as you like
+RESTORE_MODEL = False # If True, restore existing model instead of training a new one
+RECORDING_STEP = 10
+TEST = False  # if we want to predict test image as well
+TESTING_SIZE = 50 # number of test images i.e. 50
 
 # further functions ############################################################
 
-# Make an image summary for 4d tensor image with index idx
-def get_image_summary(img, idx = 0):
-    V = tf.slice(img, (0, 0, 0, idx), (1, -1, -1, 1))
-    img_w = img.get_shape().as_list()[1]
-    img_h = img.get_shape().as_list()[2]
-    min_value = tf.reduce_min(V)
-    V = V - min_value
-    max_value = tf.reduce_max(V)
-    V = V / (max_value*PIXEL_DEPTH)
-    V = tf.reshape(V, (img_w, img_h, 1))
-    V = tf.transpose(V, (2, 0, 1))
-    V = tf.reshape(V, (-1, img_w, img_h, 1))
-    return V
-
-# Make an image summary for 3d tensor image with index idx
-def get_image_summary_3d(img):
-    V = tf.slice(img, (0, 0, 0), (1, -1, -1))
-    img_w = img.get_shape().as_list()[1]
-    img_h = img.get_shape().as_list()[2]
-    V = tf.reshape(V, (img_w, img_h, 1))
-    V = tf.transpose(V, (2, 0, 1))
-    V = tf.reshape(V, (-1, img_w, img_h, 1))
-    return V
-
-# Get a concatenation of the prediction and groundtruth for given input file
-def get_prediction_with_groundtruth(filename, image_idx):
-    imageid = "satImage_%.3d" % image_idx
-    image_filename = filename + imageid + ".png"
-    img = mpimg.imread(image_filename)
-
-    img_prediction = get_prediction(img)
-    cimg = concatenate_images(img, img_prediction)
-
-    return cimg
 
 ###########################################################################
 ###############################################################################
@@ -108,6 +82,7 @@ def fc_layer(input,channels_in,channels_out,name="fc"):
 
 ##### MAIN RUNNING FUNCTION ####################################################
 def main(argv=None):  # pylint: disable=unused-argument
+
     data_dir = 'training/'
     train_data_filename = data_dir + 'images/'
     train_labels_filename = data_dir + 'groundtruth/'
@@ -117,7 +92,6 @@ def main(argv=None):  # pylint: disable=unused-argument
     train_labels = extract_labels(train_labels_filename, TRAINING_SIZE)
 
     num_epochs = NUM_EPOCHS
-
     # Now check the size of both classes and balance ###############################
     c0 = 0
     c1 = 0
@@ -149,6 +123,52 @@ def main(argv=None):  # pylint: disable=unused-argument
             c1 = c1 + 1
     print ('Number of data points per class: c0 = ' + str(c0) + ' c1 = ' + str(c1))
     # END of balancing #############################################################
+
+
+
+
+
+
+    # Make an image summary for 4d tensor image with index idx
+    def get_image_summary(img, idx = 0):
+        V = tf.slice(img, (0, 0, 0, idx), (1, -1, -1, 1))
+        img_w = img.get_shape().as_list()[1]
+        img_h = img.get_shape().as_list()[2]
+        min_value = tf.reduce_min(V)
+        V = V - min_value
+        max_value = tf.reduce_max(V)
+        V = V / (max_value*PIXEL_DEPTH)
+        V = tf.reshape(V, (img_w, img_h, 1))
+        V = tf.transpose(V, (2, 0, 1))
+        V = tf.reshape(V, (-1, img_w, img_h, 1))
+        return V
+
+    # Make an image summary for 3d tensor image with index idx
+    def get_image_summary_3d(img):
+        V = tf.slice(img, (0, 0, 0), (1, -1, -1))
+        img_w = img.get_shape().as_list()[1]
+        img_h = img.get_shape().as_list()[2]
+        V = tf.reshape(V, (img_w, img_h, 1))
+        V = tf.transpose(V, (2, 0, 1))
+        V = tf.reshape(V, (-1, img_w, img_h, 1))
+        return V
+
+    # Get a concatenation of the prediction and groundtruth for given input file
+    def get_prediction_with_groundtruth(filename, image_idx):
+        imageid = "satImage_%.3d" % image_idx
+        image_filename = filename + imageid + ".png"
+        img = mpimg.imread(image_filename)
+
+        img_prediction = get_prediction(img)
+        cimg = concatenate_images(img, img_prediction)
+
+        return cimg
+
+
+
+
+
+
 
     # This is where training samples and labels are fed to the graph.
     # These placeholder nodes will be fed a batch of training data at each
@@ -380,10 +400,6 @@ def main(argv=None):  # pylint: disable=unused-argument
                         summary_str, _, l, lr, predictions = s.run(
                             [summary_op, optimizer, loss, learning_rate, train_prediction],
                             feed_dict=feed_dict)
-
-                        #oimg = get_prediction_with_overlay(train_data_filename, 10)
-                        #s_conv = get_image_summary(oimg)
-                        #prediction_summary = tf.summary.image('summary_conv' + str(step), oimg)
 
                         summary_str = s.run(summary_op, feed_dict=feed_dict)
                         summary_writer.add_summary(summary_str, step)
