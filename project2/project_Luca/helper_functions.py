@@ -18,14 +18,14 @@ NUM_CHANNELS = 3 # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2  # 0 or 1
 
-TRAINING_SIZE = 10
+TRAINING_SIZE = 50
 VALIDATION_SIZE = 5  # Size of the validation set.
 SEED = 50  # Set to None for random seed.
 BATCH_SIZE = 16 # 64
-NUM_EPOCHS = 3 # how many as you like
+NUM_EPOCHS = 30 # how many as you like
 RESTORE_MODEL = False # If True, restore existing model instead of training a new one
 RECORDING_STEP = 50
-TEST = False  # if we want to predict test image as well
+TEST = True  # if we want to predict test image as well
 TESTING_SIZE = 50 # number of test images i.e. 50
 
 
