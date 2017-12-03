@@ -27,7 +27,7 @@ def reconstruct_from_labels(image_id):
     for i in range(1, len(lines)):
         line = lines[i]
         if not image_id_str in line:
-            continue
+            continue 
 
         tokens = line.split(',')
         id = tokens[0]
