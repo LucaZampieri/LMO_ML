@@ -18,26 +18,44 @@ NUM_CHANNELS = 3 # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2  # 0 or 1
 
-TRAINING_SIZE = 10
-VALIDATION_SIZE = 5  # Size of the validation set.
-SEED = 50  # Set to None for random seed.
-BATCH_SIZE = 16 # 64
-NUM_EPOCHS = 3 # how many as you like
-RESTORE_MODEL = False # If True, restore existing model instead of training a new one
-RECORDING_STEP = 50
-TEST = False  # if we want to predict test image as well
-TESTING_SIZE = 50 # number of test images i.e. 50
-
-
-
-
-
 # Set image patch size in pixels
 # IMG_PATCH_SIZE should be a multiple of 4
 # image size should be an integer multiple of this number!
 IMG_PATCH_SIZE = 16
 
+########################## functions ###########################################
+# balance the data
+def balance_classes_in_data(train_data,train_labels):
+    c0 = 0
+    c1 = 0
+    for i in range(len(train_labels)):
+        if train_labels[i][0] == 1:
+            c0 = c0 + 1
+        else:
+            c1 = c1 + 1
+    print ('Number of data points per class: c0 = ' + str(c0) + ' c1 = ' + str(c1))
+    # balance to take the same number of patches with c0 and c1 classes
+    print ('Balancing training data...')
+    min_c = min(c0, c1)
+    idx0 = [i for i, j in enumerate(train_labels) if j[0] == 1]
+    idx1 = [i for i, j in enumerate(train_labels) if j[1] == 1]
+    new_indices = idx0[0:min_c] + idx1[0:min_c]
+    print ('len(new_indices): ',len(new_indices))
+    print ('train_data.shape: ',train_data.shape)
+    train_data = train_data[new_indices,:,:,:]
+    train_labels = train_labels[new_indices]
+    train_size = train_labels.shape[0]
+    print ('train_data.shape after balancing: ',train_data.shape)
 
+    c0 = 0
+    c1 = 0
+    for i in range(len(train_labels)):
+        if train_labels[i][0] == 1:
+            c0 = c0 + 1
+        else:
+            c1 = c1 + 1
+    print ('Number of data points per class: c0 = ' + str(c0) + ' c1 = ' + str(c1))
+    return train_data, train_labels, train_size
 
 # Extract patches from a given image
 def img_crop(im, w, h):
