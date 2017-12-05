@@ -21,11 +21,11 @@ def mask_to_submission_strings(image_filename):
     img_number = int(re.search(r"\d+", image_filename).group(0))
     im = mpimg.imread(image_filename)
     patch_size = 16
-    for j in range(0, im.shape[1], patch_size):
+    for j in range(0, im.shape[1], patch_size):       # columns  #patch_size is the increment
         for i in range(0, im.shape[0], patch_size):
-            patch = im[i:i + patch_size, j:j + patch_size]
+            patch = im[i:i + patch_size, j:j + patch_size] # ritorna il patch
             label = patch_to_label(patch)
-            yield("{:03d}_{}_{},{}".format(img_number, j, i, label))
+            yield("{:03d}_{}_{},{}".format(img_number, j, i, label)) # 001_0_0_(label) sarà l' identificativo del primo  patch della prima immagine
 
 
 def masks_to_submission(submission_filename, *image_filenames):
