@@ -20,15 +20,15 @@ import tensorflow as tf
 
 ## functions for image processing
 from helper_functions import *
-################################################################################
 
 
+########################## Saving directory  ###################################
 tf.app.flags.DEFINE_string('train_dir', '/tmp/mnist/test4',
                            """Directory where to write event logs """
                            """and checkpoint.""")
 FLAGS = tf.app.flags.FLAGS
 
-################################################################################
+########################### Parameters #########################################
 TRAINING_SIZE = 10
 VALIDATION_SIZE = 5  # Size of the validation set.
 SEED = 50  # Set to None for random seed.
@@ -45,7 +45,7 @@ print ('PIXEL_DEPTH: ', PIXEL_DEPTH)       # 255?
 print ('NUM_LABELS: ', NUM_LABELS )        # 2?
 print ('IMG_PATCH_SIZE: ', IMG_PATCH_SIZE) # 16?
 
-
+"""These are not used for the moment"""
 # Convolutional Layer 1.
 filter_size1 = 5          # Convolution filters are 5 x 5 pixels.
 num_filters1 = 16         # There are 16 of these filters.
@@ -59,65 +59,36 @@ fc_size = 128             # Number of neurons in fully-connected layer.
 
 
 
-
-
 # further functions ############################################################
 def new_weights(shape,stddev_ = 0.05):
+    """Funtion to define new weights"""
     return tf.Variable(tf.truncated_normal(shape, stddev=stddev_,seed=SEED),name="W")
 
 def new_biases(length):
+    """Function to define biases"""
     return tf.Variable(tf.constant(0.1, shape=[length]),name="B")
 
 ########################## internal functions ##############################
-def conv_layer(self, input,w,b, name='conv'): # channels_in,channels_out
-    with tf.name_scope(name):
-        #w = new_weights([5,5,channels_in,channels_out])
-        #b = tf.Variable(tf.zeros([channels_out]),name="B")
-        conv = tf.nn.conv2d(input,w,strides=[1,1,1,1],padding="SAME")
-        act = tf.nn.relu(conv + b)
-        #####tf.nn.relu(tf.nn.bias_add(conv, b))
-        tf.summary.histogram("weights", w)
-        tf.summary.histogram("biases", b)
-        #tf.summary.histogram("activations", act)
-        layer = tf.nn.max_pool(act,ksize=[1,2,2,1],strides=[1,2,2,1],padding="SAME")
-        return layer
 
 def flatten_layer(layer):
+    """Function to flatten the layers"""
     layer_shape = layer.get_shape()
     num_features = layer_shape[1:4].num_elements()
     layer_flat = tf.reshape(layer, [-1, num_features])
     return layer_flat, num_features
 
-def fc_layer(input,channels_in,channels_out,name="fc"):
+def fc_layer(input,channels_in,channels_out,relu=True, name="fc"):
+    """Function to define a fully connected layer.
+     Relu is applied by default"""
     with tf.name_scope(name):
         w = tf.Variable(tf.zeros([channels_in,channels_out]),name="W")
         b = tf.Variable(tf.zeros([channels_out]),name="B")
-        layer = tf.nn.relu(tf.matmul(input,w)+b)
+        layer = tf.matmul(input,w)+b
+        if relu == True:
+            layer = tf.nn.relu(layer)
         return layer,w,b
 
-# Make an image summary for 4d tensor image with index idx
-def get_image_summary(img, idx = 0):
-    V = tf.slice(img, (0, 0, 0, idx), (1, -1, -1, 1))
-    img_w = img.get_shape().as_list()[1]
-    img_h = img.get_shape().as_list()[2]
-    min_value = tf.reduce_min(V)
-    V = V - min_value
-    max_value = tf.reduce_max(V)
-    V = V / (max_value*PIXEL_DEPTH)
-    V = tf.reshape(V, (img_w, img_h, 1))
-    V = tf.transpose(V, (2, 0, 1))
-    V = tf.reshape(V, (-1, img_w, img_h, 1))
-    return V
 
-# Make an image summary for 3d tensor image with index idx
-def get_image_summary_3d(img):
-    V = tf.slice(img, (0, 0, 0), (1, -1, -1))
-    img_w = img.get_shape().as_list()[1]
-    img_h = img.get_shape().as_list()[2]
-    V = tf.reshape(V, (img_w, img_h, 1))
-    V = tf.transpose(V, (2, 0, 1))
-    V = tf.reshape(V, (-1, img_w, img_h, 1))
-    return V
 
 
 
@@ -153,6 +124,7 @@ class NN(object):
         #self._options = options
         self._session = session
 
+        # Here one can add weights:
         with tf.name_scope("conv1"):
             self.conv1_weights = new_weights([5, 5, NUM_CHANNELS, 32]) # 5x5 filter, depth 32.
             self.conv1_biases = tf.Variable(tf.zeros([32]), name = "B")
@@ -175,29 +147,55 @@ class NN(object):
             #w = new_weights([5,5,channels_in,channels_out])
             #b = tf.Variable(tf.zeros([channels_out]),name="B")
             conv = tf.nn.conv2d(input,w,strides=[1,1,1,1],padding="SAME")
-            act = tf.nn.relu(conv + b)
+            layer = tf.nn.relu(conv + b)
             #####tf.nn.relu(tf.nn.bias_add(conv, b))
             tf.summary.histogram("weights", w)
             tf.summary.histogram("biases", b)
             #tf.summary.histogram("activations", act)
-            layer = tf.nn.max_pool(act,ksize=[1,2,2,1],strides=[1,2,2,1],padding="SAME")
             return layer
+
 
     def model(self, data, train=False):
         """The Model definition."""
-        pool = self.conv_layer(input=data,w=self.conv1_weights,b=self.conv1_biases, name='conv1')
-        pool2 = self.conv_layer(input=pool,w=self.conv2_weights,b=self.conv2_biases, name='conv2')
-        '''  # jsut a test
-        pool, self.conv1_weights, self.conv1_biases\
-                = self.conv_layer(input=data,channels_in=NUM_CHANNELS,channels_out=32, name='conv1')
-
-        pool2, self.conv2_weights, self.conv2_biases\
-                = self.conv_layer(input=pool,channels_in=32,channels_out=64, name='conv2')'''
-
-        reshape, _ = flatten_layer(pool2)
-        hidden = tf.nn.relu(tf.matmul(reshape, self.fc1_weights) + self.fc1_biases)
+        layer = self.conv_layer(input=data,w=self.conv1_weights,b=self.conv1_biases, name='conv1')
+        layer = tf.nn.max_pool(layer,ksize=[1,2,2,1],strides=[1,2,2,1],padding="SAME")
+        layer = self.conv_layer(input=layer,w=self.conv2_weights,b=self.conv2_biases, name='conv2')
+        layer = tf.nn.max_pool(layer,ksize=[1,2,2,1],strides=[1,2,2,1],padding="SAME")
+        # add here conv layers
+        reshaped, _ = flatten_layer(layer)
+        hidden = tf.nn.relu(tf.matmul(reshaped, self.fc1_weights) + self.fc1_biases)
         out = tf.matmul(hidden, self.fc2_weights) + self.fc2_biases
         return out
+
+    def set_stuff(self):
+        # Training computation: logits + cross-entropy loss.
+        logits = self.model(train_data_node, True) # BATCH_SIZE*NUM_LABELS
+        # print 'logits = ' + str(logits.get_shape()) + ' train_labels_node = ' + str(train_labels_node.get_shape())
+
+        self.loss = tf.reduce_mean(
+            tf.nn.softmax_cross_entropy_with_logits(
+                logits = logits, labels = train_labels_node),name="my_xent")
+
+        batch = tf.Variable(0)
+        # Decay once per epoch, using an exponential schedule starting at 0.01.
+        self.learning_rate = tf.train.exponential_decay(
+            0.01,                # Base learning rate.
+            batch * BATCH_SIZE,  # Current index into the dataset.
+            train_size,          # Decay step.
+            0.95,                # Decay rate.
+            staircase=True,name="learning_rate")
+
+        # Use simple momentum for the optimization.
+        self.optimizer = tf.train.MomentumOptimizer(self.learning_rate,
+                                               0.0).minimize(self.loss,
+                                                             global_step=batch)
+
+        self.train_prediction = tf.nn.softmax(logits)
+        # We'll compute them only once in a while by calling their {eval()} method.
+        train_all_prediction = tf.nn.softmax(self.model(train_all_data_node))
+
+        # Add ops to save and restore all the variables.
+        self.saver = tf.train.Saver()
 
     def optimize(self):
         tf.global_variables_initializer().run()
@@ -246,48 +244,14 @@ class NN(object):
                     print ('Minibatch error: %.1f%%' % error_rate(predictions,
                                                                  batch_labels))
                     sys.stdout.flush()
-                '''else:
-                    # Run the graph and fetch some of the nodes.
-                    _, l, lr, predictions = self._session.run(
-                        [self.optimizer, self.loss, self.learning_rate, self.train_prediction],
-                        feed_dict=feed_dict)'''
+
         # Print the time-usage.
         print("End optimisation")
         # Save the variables to disk.
         save_path = self.saver.save(self._session, FLAGS.train_dir + "/model.ckpt")
         print("Model saved in file: %s" % save_path)
 
-    def set_stuff(self):
-        # Training computation: logits + cross-entropy loss.
-        logits = self.model(train_data_node, True) # BATCH_SIZE*NUM_LABELS
-        # print 'logits = ' + str(logits.get_shape()) + ' train_labels_node = ' + str(train_labels_node.get_shape())
 
-        self.loss = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits(
-                logits = logits, labels = train_labels_node),name="my_xent")
-
-
-        batch = tf.Variable(0)
-        # Decay once per epoch, using an exponential schedule starting at 0.01.
-        self.learning_rate = tf.train.exponential_decay(
-            0.01,                # Base learning rate.
-            batch * BATCH_SIZE,  # Current index into the dataset.
-            train_size,          # Decay step.
-            0.95,                # Decay rate.
-            staircase=True,name="learning_rate")
-
-
-        # Use simple momentum for the optimization.
-        self.optimizer = tf.train.MomentumOptimizer(self.learning_rate,
-                                               0.0).minimize(self.loss,
-                                                             global_step=batch)
-
-        self.train_prediction = tf.nn.softmax(logits)
-        # We'll compute them only once in a while by calling their {eval()} method.
-        train_all_prediction = tf.nn.softmax(self.model(train_all_data_node))
-
-        # Add ops to save and restore all the variables.
-        self.saver = tf.train.Saver()
 
     ############################# methods for predictions ######################
     # Get prediction for given input image

@@ -219,3 +219,27 @@ def make_img_overlay(img, predicted_img):
     overlay = Image.fromarray(color_mask, 'RGB').convert("RGBA")
     new_img = Image.blend(background, overlay, 0.2)
     return new_img
+
+# Make an image summary for 4d tensor image with index idx
+def get_image_summary(img, idx = 0):
+    V = tf.slice(img, (0, 0, 0, idx), (1, -1, -1, 1))
+    img_w = img.get_shape().as_list()[1]
+    img_h = img.get_shape().as_list()[2]
+    min_value = tf.reduce_min(V)
+    V = V - min_value
+    max_value = tf.reduce_max(V)
+    V = V / (max_value*PIXEL_DEPTH)
+    V = tf.reshape(V, (img_w, img_h, 1))
+    V = tf.transpose(V, (2, 0, 1))
+    V = tf.reshape(V, (-1, img_w, img_h, 1))
+    return V
+
+# Make an image summary for 3d tensor image with index idx
+def get_image_summary_3d(img):
+    V = tf.slice(img, (0, 0, 0), (1, -1, -1))
+    img_w = img.get_shape().as_list()[1]
+    img_h = img.get_shape().as_list()[2]
+    V = tf.reshape(V, (img_w, img_h, 1))
+    V = tf.transpose(V, (2, 0, 1))
+    V = tf.reshape(V, (-1, img_w, img_h, 1))
+    return V
