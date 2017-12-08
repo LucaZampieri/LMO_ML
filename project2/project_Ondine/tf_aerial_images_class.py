@@ -28,12 +28,12 @@ FLAGS = tf.app.flags.FLAGS
 
 ########################### Parameters #########################################
 TRAINING_SIZE = 10
-VALIDATION_SIZE = 5  # Size of the validation set.
+# VALIDATION_SIZE = 5  # Size of the validation set.
 SEED = 50  # Set to None for random seed.
-BATCH_SIZE = 16 # 64
-NUM_EPOCHS = 3 # how many as you like
+BATCH_SIZE = 10 # 16 # 64 (< train_size, and train_size = TRAINING_SIZE if CONSIDER_PATCHES = False)
+NUM_EPOCHS = 5 # how many as you like
 RESTORE_MODEL = False # If True, restore existing model instead of training a new one
-RECORDING_STEP = 50
+RECORDING_STEP = 1
 TEST = False  # if we want to predict test image as well
 TESTING_SIZE = 50 # number of test images i.e. 50
 
@@ -296,9 +296,9 @@ class NN(object):
             with tf.name_scope('conv2a'):
                 h_conv2 = tf.nn.relu(conv2d(h_pool1, self.W_conv2) + self.b_conv2)
             with tf.name_scope('conv2b'):
-                h_conv2b = tf.nn.relu(conv2d(h_conv2, self.W_conv2b) + self.b_conv2b)
+                h_conv8b = tf.nn.relu(conv2d(h_conv2, self.W_conv2b) + self.b_conv2b) # h_conv2b
             
-            # Second pooling layer.
+            ''' # Second pooling layer.
             with tf.name_scope('pool2'):
                 h_pool2 = max_pool_2x2(h_conv2b)
 
@@ -359,7 +359,7 @@ class NN(object):
             with tf.name_scope('conv8a'):
                 h_conv8 = tf.nn.relu(conv2d(h_upconv3ext, self.W_conv8) + self.b_conv8)
             with tf.name_scope('conv8b'):
-                h_conv8b = tf.nn.relu(conv2d(h_conv8, self.W_conv8b) + self.b_conv8b)
+                h_conv8b = tf.nn.relu(conv2d(h_conv8, self.W_conv8b) + self.b_conv8b)'''
             
             # Fourth up-convolution layer
             with tf.name_scope('upconv4'):
@@ -407,7 +407,7 @@ class NN(object):
             batch * BATCH_SIZE,  # Current index into the dataset.
             train_size,          # Decay step.
             0.95,                # Decay rate.
-            staircase=True,name="learning_rate")
+            staircase=True, name="learning_rate")
 
         # Use simple momentum for the optimization.
         self.optimizer = tf.train.MomentumOptimizer(self.learning_rate,
@@ -439,25 +439,32 @@ class NN(object):
             print('Epoch = ', iepoch)
             
             perm_indices = numpy.random.permutation(training_indices)
+                
             for step in range (int(train_size / BATCH_SIZE)):
-
-                offset = (step * BATCH_SIZE) % (train_size - BATCH_SIZE)
+                print('Step =', step)
+                
+                if train_size != BATCH_SIZE:
+                    offset = (step * BATCH_SIZE) % (train_size - BATCH_SIZE)       
+                else:
+                    offset = 0
+                
                 batch_indices = perm_indices[offset:(offset + BATCH_SIZE)]
-
-                batch_data = train_data[batch_indices, :, :, :]
+                batch_data = train_data[batch_indices, :, :, :]                
                 batch_labels = train_labels[batch_indices]
-
                 feed_dict = {train_data_node: batch_data,
                              train_labels_node: batch_labels}
 
+                print('Init training network')
                 _, l, lr, predictions = self._session.run(
                     [self.optimizer, self.loss, self.learning_rate, self.train_prediction],
                     feed_dict=feed_dict)
 
+                print('end training network, begin recording step')
+                
                 if step % RECORDING_STEP == 0:
-                    summary_str = self._session.run(summary_op, feed_dict=feed_dict)
-                    summary_writer.add_summary(summary_str, step)
-                    summary_writer.flush()
+                    # summary_str = self._session.run(summary_op, feed_dict=feed_dict) TODOOOOOOOOOOOOOOOOOO put it back!
+                    # summary_writer.add_summary(summary_str, step)
+                    # summary_writer.flush()
 
                     print ('global step:', iepoch*int(train_size / BATCH_SIZE)+step,\
                             ' over ',NUM_EPOCHS*int(train_size / BATCH_SIZE),\

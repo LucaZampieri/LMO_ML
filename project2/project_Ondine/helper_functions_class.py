@@ -132,20 +132,23 @@ def extract_labels(filename, num_images, patches=True):
         num_images = len(gt_imgs) # necessary if an image (or more) has not been found
         gt_patches = [img_crop(gt_imgs[i], IMG_PATCH_SIZE, IMG_PATCH_SIZE) for i in range(num_images)]
         data = np.asarray([gt_patches[i][j] for i in range(len(gt_patches)) for j in range(len(gt_patches[i]))])
-        gt_imgs = [value_to_class(np.mean(data[i])) for i in range(len(data))]
+        out_lab = [value_to_class(np.mean(data[i])) for i in range(len(data))]
+    else:
+        data = np.asarray(gt_imgs)
+        out_lab = [[[value_to_class(data[i][j][k]) for k in range(data.shape[2])] for j in range(data.shape[1])] for i in range(data.shape[0])]
 
     # Convert to dense 1-hot representation.
-    return np.asarray(gt_imgs).astype(np.float32)
+    return np.asarray(out_lab).astype(np.float32)
 
 
 def error_rate(predictions, labels):
     """Return the error rate based on dense predictions and 1-hot labels."""
-    return 100.0 - (
-        100.0 *
-        np.sum(np.argmax(predictions, 1) ==  np.argmax(labels, 1)) /
-        predictions.shape[0])
+    if CONSIDER_PATCHES:
+        return 100.0 - (100.0 * np.sum(np.argmax(predictions, 1) ==  np.argmax(labels, 1)) / predictions.shape[0])
+    else:
+        return 100.0 - (100.0 * np.sum(np.argmax(predictions, 3) ==  np.argmax(labels, 3)) / np.prod(predictions.shape[0:3]))
 
-# Write predictions from neural network to a file
+# Write predictions from neural network to a file TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO FOR NON PATCHES!!!!!!! NEVER CALLED
 def write_predictions_to_file(predictions, labels, filename):
     max_labels = np.argmax(labels, 1)
     max_predictions = np.argmax(predictions, 1)
@@ -155,10 +158,14 @@ def write_predictions_to_file(predictions, labels, filename):
         file.write(max_labels(i) + ' ' + max_predictions(i))
     file.close()
 
-# Print predictions from neural network
+# Print predictions from neural network TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO NEVER CALLED!
 def print_predictions(predictions, labels):
-    max_labels = np.argmax(labels, 1)
-    max_predictions = np.argmax(predictions, 1)
+    if CONSIDER_PATCHES:
+        indx = 1
+    else:
+        indx = 3
+    max_labels = np.argmax(labels, indx)
+    max_predictions = np.argmax(predictions, indx)
     print (str(max_labels) + ' ' + str(max_predictions))
 
 
@@ -171,7 +178,7 @@ def label_to_img(imgwidth, imgheight, w, h, labels, patches=True):
             if patches:
                 lab = labels[idx][0]
             else:
-                lab = labels[0,j,i,0]
+                lab = labels[0,j,i,0] # TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO VERIFY I,J or J,I!!!!
 				
             if lab > 0.5: # TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
                 l = 0
@@ -187,7 +194,7 @@ def img_float_to_uint8(img):
     rimg = (rimg / np.max(rimg) * PIXEL_DEPTH).round().astype(np.uint8)
     return rimg
 
-def concatenate_images(img, gt_img):
+def concatenate_images(img, gt_img): # TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO NEVER CALLED!!
     nChannels = len(gt_img.shape)
     w = gt_img.shape[0]
     h = gt_img.shape[1]
