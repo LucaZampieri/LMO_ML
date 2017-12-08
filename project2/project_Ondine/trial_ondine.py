@@ -44,21 +44,6 @@ def get_prediction(img, s):
     
     return img_prediction
 
-
-def conv2d(x, W):
-    """conv2d returns a 2d convolution layer with full stride."""
-    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
-
-def upconv2d(x, W, shape):
-    """upconv2d returns a 2d transpose convolution layer with full stride."""
-    return tf.nn.conv2d_transpose(x, W, output_shape=shape, strides=[1, 2, 2, 1], padding='SAME')
-
-
-def max_pool_2x2(x):
-    """max_pool_2x2 downsamples a feature map by 2X."""
-    return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                          strides=[1, 2, 2, 1], padding='SAME')
-
 def weight_variable(shape):
     """weight_variable generates a weight variable of a given shape."""
     initial = tf.truncated_normal(shape, stddev=0.1, seed=SEED)
@@ -178,9 +163,6 @@ def neuralnetwork(x):
     with tf.name_scope('upconv2'):
         W_upconv2 = weight_variable([2, 2, 256, 512])
         b_upconv2 = bias_variable([256])
-        print('--------------------')
-        print(W_upconv2)
-        print(b_upconv2)
         h_upconv2 = upconv2d(h_conv6b, W_upconv2, [-1, 2*h_conv6b.get_shape().as_list()[1], 2*h_conv6b.get_shape().as_list()[2], 256]) + b_upconv2
         h_upconv2ext = tf.concat([h_conv3b, h_upconv2], 3)
     
@@ -232,9 +214,6 @@ def neuralnetwork(x):
     with tf.name_scope('lastconv'):
         W_convlast = weight_variable([1, 1, 64, NUM_LABELS])
         b_convlast = bias_variable([NUM_LABELS])
-        print('--------------------')
-        print(W_convlast)
-        print(b_convlast)
         y_conv = conv2d(h_conv9b, W_convlast) + b_convlast
 
     return y_conv
