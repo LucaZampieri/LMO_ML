@@ -178,7 +178,7 @@ def label_to_img(imgwidth, imgheight, w, h, labels, patches=True):
             if patches:
                 lab = labels[idx][0]
             else:
-                lab = labels[0,j,i,0] # TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO VERIFY I,J or J,I!!!!
+                lab = labels[0,j,i,0]
 				
             if lab > 0.5: # TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
                 l = 0

@@ -172,101 +172,109 @@ class NN(object):
                 self.fc2_biases = bias_variable(shape=[NUM_LABELS])
         
         else:
+            w1 = 64
+            w2 = 128
+            w3 = 256
+            w4 = 512
+            w5 = 1024
+            filter_size1 = 3
+            upfilter_size = 2
+			
             # First convolutional layers
             with tf.name_scope('conv1a'):
-                self.W_conv1 = weight_variable([3, 3, NUM_CHANNELS, 64])
-                self.b_conv1 = bias_variable([64])
+                self.W_conv1 = weight_variable([filter_size1, filter_size1, NUM_CHANNELS, w1])
+                self.b_conv1 = bias_variable([w1])
             with tf.name_scope('conv1b'):
-                self.W_conv1b = weight_variable([3, 3, 64, 64])
-                self.b_conv1b = bias_variable([64])
+                self.W_conv1b = weight_variable([filter_size1, filter_size1, w1, w1])
+                self.b_conv1b = bias_variable([w1])
 
             # Second convolutional layers
             with tf.name_scope('conv2a'):
-                self.W_conv2 = weight_variable([3, 3, 64, 128])
-                self.b_conv2 = bias_variable([128])
+                self.W_conv2 = weight_variable([filter_size1, filter_size1, w1, w2])
+                self.b_conv2 = bias_variable([w2])
             with tf.name_scope('conv2b'):
-                self.W_conv2b = weight_variable([3, 3, 128, 128])
-                self.b_conv2b = bias_variable([128])
+                self.W_conv2b = weight_variable([filter_size1, filter_size1, w2, w2])
+                self.b_conv2b = bias_variable([w2])
             
             # Third convolutional layers
             with tf.name_scope('conv3a'):
-                self.W_conv3 = weight_variable([3, 3, 128, 256])
-                self.b_conv3 = bias_variable([256])
+                self.W_conv3 = weight_variable([filter_size1, filter_size1, w2, w3])
+                self.b_conv3 = bias_variable([w3])
             with tf.name_scope('conv3b'):
-                self.W_conv3b = weight_variable([3, 3, 256, 256])
-                self.b_conv3b = bias_variable([256])
+                self.W_conv3b = weight_variable([filter_size1, filter_size1, w3, w3])
+                self.b_conv3b = bias_variable([w3])
 
             # Fourth convolutional layers
             with tf.name_scope('conv4a'):
-                self.W_conv4 = weight_variable([3, 3, 256, 512])
-                self.b_conv4 = bias_variable([512])
+                self.W_conv4 = weight_variable([filter_size1, filter_size1, w3, w4])
+                self.b_conv4 = bias_variable([w4])
             with tf.name_scope('conv4b'):
-                self.W_conv4b = weight_variable([3, 3, 512, 512])
-                self.b_conv4b = bias_variable([512])
+                self.W_conv4b = weight_variable([filter_size1, filter_size1, w4, w4])
+                self.b_conv4b = bias_variable([w4])
             
             # Fifth (and last down) convolutional layers
             with tf.name_scope('conv5a'):
-                self.W_conv5 = weight_variable([3, 3, 512, 1024])
-                self.b_conv5 = bias_variable([1024])
+                self.W_conv5 = weight_variable([filter_size1, filter_size1, w4, w5])
+                self.b_conv5 = bias_variable([w5])
             with tf.name_scope('conv5b'):
-                self.W_conv5b = weight_variable([3, 3, 1024, 1024])
-                self.b_conv5b = bias_variable([1024])
+                self.W_conv5b = weight_variable([filter_size1, filter_size1, w5, w5])
+                self.b_conv5b = bias_variable([w5])
 
             # First up-convolution layer
             with tf.name_scope('upconv1'):
-                self.W_upconv1 = weight_variable([2, 2, 512, 1024])
-                self.b_upconv1 = bias_variable([512])
+                self.W_upconv1 = weight_variable([2, 2, w4, w5])
+                self.b_upconv1 = bias_variable([w4])
                 
             # Sixth convolutional layers
             with tf.name_scope('conv6a'):
-                self.W_conv6 = weight_variable([3, 3, 1024, 512])
-                self.b_conv6 = bias_variable([512])
+                self.W_conv6 = weight_variable([filter_size1, filter_size1, w5, w4])
+                self.b_conv6 = bias_variable([w4])
             with tf.name_scope('conv6b'):
-                self.W_conv6b = weight_variable([3, 3, 512, 512])
-                self.b_conv6b = bias_variable([512])
+                self.W_conv6b = weight_variable([filter_size1, filter_size1, w4, w4])
+                self.b_conv6b = bias_variable([w4])
 
             # Second up-convolution layer
             with tf.name_scope('upconv2'):
-                self.W_upconv2 = weight_variable([2, 2, 256, 512])
-                self.b_upconv2 = bias_variable([256])
+                self.W_upconv2 = weight_variable([upfilter_size, upfilter_size, w3, w4])
+                self.b_upconv2 = bias_variable([w3])
             
             # Seventh convolutional layers
             with tf.name_scope('conv7a'):
-                self.W_conv7 = weight_variable([3, 3, 512, 256])
-                self.b_conv7 = bias_variable([256])
+                self.W_conv7 = weight_variable([filter_size1, filter_size1, w4, w3])
+                self.b_conv7 = bias_variable([w3])
             with tf.name_scope('conv7b'):
-                self.W_conv7b = weight_variable([3, 3, 256, 256])
-                self.b_conv7b = bias_variable([256])
+                self.W_conv7b = weight_variable([filter_size1, filter_size1, w3, w3])
+                self.b_conv7b = bias_variable([w3])
 
             # Third up-convolution layer
             with tf.name_scope('upconv3'):
-                self.W_upconv3 = weight_variable([2, 2, 128, 256])
-                self.b_upconv3 = bias_variable([128])
+                self.W_upconv3 = weight_variable([upfilter_size, upfilter_size, w2, w3])
+                self.b_upconv3 = bias_variable([w2])
             
             # Eigth convolutional layers
             with tf.name_scope('conv8a'):
-                self.W_conv8 = weight_variable([3, 3, 256, 128])
-                self.b_conv8 = bias_variable([128])
+                self.W_conv8 = weight_variable([filter_size1, filter_size1, w3, w2])
+                self.b_conv8 = bias_variable([w2])
             with tf.name_scope('conv8b'):
-                self.W_conv8b = weight_variable([3, 3, 128, 128])
-                self.b_conv8b = bias_variable([128])
+                self.W_conv8b = weight_variable([filter_size1, filter_size1, w2, w2])
+                self.b_conv8b = bias_variable([w2])
             
             # Fourth up-convolution layer
             with tf.name_scope('upconv4'):
-                self.W_upconv4 = weight_variable([2, 2, 64, 128])
-                self.b_upconv4 = bias_variable([64])
+                self.W_upconv4 = weight_variable([upfilter_size, upfilter_size, w1, w2])
+                self.b_upconv4 = bias_variable([w1])
             
             # Nineth convolutional layers
             with tf.name_scope('conv9a'):
-                self.W_conv9 = weight_variable([3, 3, 128, 64])
-                self.b_conv9 = bias_variable([64])
+                self.W_conv9 = weight_variable([filter_size1, filter_size1, w2, w1])
+                self.b_conv9 = bias_variable([w1])
             with tf.name_scope('conv9b'):
-                self.W_conv9b = weight_variable([3, 3, 64, 64])
-                self.b_conv9b = bias_variable([64])
+                self.W_conv9b = weight_variable([filter_size1, filter_size1, w1, w1])
+                self.b_conv9b = bias_variable([w1])
 
             # Last 1x1 convolutional layer
             with tf.name_scope('lastconv'):
-                self.W_convlast = weight_variable([1, 1, 64, NUM_LABELS])
+                self.W_convlast = weight_variable([1, 1, w1, NUM_LABELS])
                 self.b_convlast = bias_variable([NUM_LABELS])
 
 
@@ -276,7 +284,7 @@ class NN(object):
         if CONSIDER_PATCHES==False:
             initial_number = data.get_shape().as_list()[0]
             
-            reshape_size = 16 # TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO MODIFY???
+            reshape_size = 400 # TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO MODIFY???
 
             with tf.name_scope('reshape'):
                 x_image = tf.reshape(data, [int(float(data.get_shape().as_list()[0]*data.get_shape().as_list()[1]*data.get_shape().as_list()[2])/reshape_size**2), reshape_size, reshape_size, NUM_CHANNELS])
@@ -296,9 +304,9 @@ class NN(object):
             with tf.name_scope('conv2a'):
                 h_conv2 = tf.nn.relu(conv2d(h_pool1, self.W_conv2) + self.b_conv2)
             with tf.name_scope('conv2b'):
-                h_conv8b = tf.nn.relu(conv2d(h_conv2, self.W_conv2b) + self.b_conv2b) # h_conv2b
+                h_conv2b = tf.nn.relu(conv2d(h_conv2, self.W_conv2b) + self.b_conv2b) # h_conv2b
             
-            ''' # Second pooling layer.
+            # Second pooling layer.
             with tf.name_scope('pool2'):
                 h_pool2 = max_pool_2x2(h_conv2b)
 
@@ -359,7 +367,7 @@ class NN(object):
             with tf.name_scope('conv8a'):
                 h_conv8 = tf.nn.relu(conv2d(h_upconv3ext, self.W_conv8) + self.b_conv8)
             with tf.name_scope('conv8b'):
-                h_conv8b = tf.nn.relu(conv2d(h_conv8, self.W_conv8b) + self.b_conv8b)'''
+                h_conv8b = tf.nn.relu(conv2d(h_conv8, self.W_conv8b) + self.b_conv8b)
             
             # Fourth up-convolution layer
             with tf.name_scope('upconv4'):
