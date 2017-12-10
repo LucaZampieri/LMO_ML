@@ -10,31 +10,44 @@ from PIL import Image
 
 import code
 
-import numpy
+import numpy as np
 
 
 # ################################ Variables ##################
 NUM_CHANNELS = 3 # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2  # 0 or 1
-
-TRAINING_SIZE = 50 #--------------
-VALIDATION_SIZE = 5  # Size of the validation set.
-SEED = 50  # Set to None for random seed.
-BATCH_SIZE = 16 # 64
-NUM_EPOCHS = 30 # how many as you like --------------
-RESTORE_MODEL = False # If True, restore existing model instead of training a new one
-RECORDING_STEP = 50
-TEST = True  # if we want to predict test image as well
-TESTING_SIZE = 50 # number of test images i.e. 50 --------------
-
-
+CONSIDER_PATCHES = False # True if we split the images patch by path, False if we consider the whole images and pixel by pixel
 
 # Set image patch size in pixels
 # IMG_PATCH_SIZE should be a multiple of 4
 # image size should be an integer multiple of this number!
 IMG_PATCH_SIZE = 16
 
+########################## functions ###########################################
+# balance the data
+def balance_classes_in_data(train_data,train_labels):
+    # Count the number of data points on each class
+    c0 = np.sum((train_labels[:,0]==1)*1)
+    c1 = train_labels.shape[0]-c0
+    print ('Number of data points per class: c0 = ' + str(c0) + ' c1 = ' + str(c1))
+    
+    # Balance to take the same number of patches with c0 and c1 classes
+    print ('Balancing training data...')
+    min_c = min(c0, c1)
+    idx0 = [i for i, j in enumerate(train_labels) if j[0] == 1]
+    idx1 = [i for i, j in enumerate(train_labels) if j[1] == 1]
+    new_indices = idx0[0:min_c] + idx1[0:min_c] # Concatenate lists
+    train_data = train_data[new_indices,:,:,:]
+    train_labels = train_labels[new_indices]
+    train_size = train_labels.shape[0]
+    print ('train_data.shape after balancing: ',train_data.shape)
+
+    c0 = np.sum((train_labels[:,0]==1)*1)
+    c1 = train_labels.shape[0]-c0
+    print ('Number of data points per class: c0 = ' + str(c0) + ' c1 = ' + str(c1))
+    
+    return train_data, train_labels, train_size
 
 
 # Extract patches from a given image
@@ -83,16 +96,16 @@ def extract_data(filename, num_images, patches=True, mytype='train'):
         num_images = len(imgs) # necessary if an image (or more) has not been found
         img_patches = [img_crop(imgs[i], IMG_PATCH_SIZE, IMG_PATCH_SIZE) for i in range(num_images)]
         imgs = [img_patches[i][j] for i in range(len(img_patches)) for j in range(len(img_patches[i]))]
+        return np.asarray(imgs)
 
-    return numpy.asarray(imgs), img_size
-
+    return np.asarray(imgs), img_size
 
 
 # Assign a label to a patch v
 def value_to_class(v):
     # you can remark the hot encoding
-    foreground_threshold = 0.25 # percentage of pixels > 1 required to assign a foreground label to a patch
-    df = numpy.sum(v)
+    foreground_threshold = 0.25 # percentage of pixels > 1 required to assign a foreground label to a patch TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+    df = np.sum(v)
     if df > foreground_threshold:
         return [0, 1]
     else:
@@ -118,44 +131,56 @@ def extract_labels(filename, num_images, patches=True):
     if patches:
         num_images = len(gt_imgs) # necessary if an image (or more) has not been found
         gt_patches = [img_crop(gt_imgs[i], IMG_PATCH_SIZE, IMG_PATCH_SIZE) for i in range(num_images)]
-        data = numpy.asarray([gt_patches[i][j] for i in range(len(gt_patches)) for j in range(len(gt_patches[i]))])
-        gt_imgs = [value_to_class(numpy.mean(data[i])) for i in range(len(data))]
+        data = np.asarray([gt_patches[i][j] for i in range(len(gt_patches)) for j in range(len(gt_patches[i]))])
+        out_lab = [value_to_class(np.mean(data[i])) for i in range(len(data))]
+    else:
+        data = np.asarray(gt_imgs)
+        out_lab = [[[value_to_class(data[i][j][k]) for k in range(data.shape[2])] for j in range(data.shape[1])] for i in range(data.shape[0])]
 
     # Convert to dense 1-hot representation.
-    return numpy.asarray(gt_imgs).astype(numpy.float32)
+    return np.asarray(out_lab).astype(np.float32)
 
 
 def error_rate(predictions, labels):
     """Return the error rate based on dense predictions and 1-hot labels."""
-    return 100.0 - (
-        100.0 *
-        numpy.sum(numpy.argmax(predictions, 1) == numpy.argmax(labels, 1)) /
-        predictions.shape[0])
+    if CONSIDER_PATCHES:
+        return 100.0 - (100.0 * np.sum(np.argmax(predictions, 1) ==  np.argmax(labels, 1)) / predictions.shape[0])
+    else:
+        return 100.0 - (100.0 * np.sum(np.argmax(predictions, 3) ==  np.argmax(labels, 3)) / np.prod(predictions.shape[0:3]))
 
-# Write predictions from neural network to a file
+# Write predictions from neural network to a file TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO FOR NON PATCHES!!!!!!! NEVER CALLED
 def write_predictions_to_file(predictions, labels, filename):
-    max_labels = numpy.argmax(labels, 1)
-    max_predictions = numpy.argmax(predictions, 1)
+    max_labels = np.argmax(labels, 1)
+    max_predictions = np.argmax(predictions, 1)
     file = open(filename, "w")
     n = predictions.shape[0]
     for i in range(0, n):
         file.write(max_labels(i) + ' ' + max_predictions(i))
     file.close()
 
-# Print predictions from neural network
+# Print predictions from neural network TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO NEVER CALLED!
 def print_predictions(predictions, labels):
-    max_labels = numpy.argmax(labels, 1)
-    max_predictions = numpy.argmax(predictions, 1)
+    if CONSIDER_PATCHES:
+        indx = 1
+    else:
+        indx = 3
+    max_labels = np.argmax(labels, indx)
+    max_predictions = np.argmax(predictions, indx)
     print (str(max_labels) + ' ' + str(max_predictions))
 
 
 # Convert array of labels to an image
-def label_to_img(imgwidth, imgheight, w, h, labels):
-    array_labels = numpy.zeros([imgwidth, imgheight])
+def label_to_img(imgwidth, imgheight, w, h, labels, patches=True):
+    array_labels = np.zeros([imgwidth, imgheight])
     idx = 0
     for i in range(0,imgheight,h):
         for j in range(0,imgwidth,w):
-            if labels[idx][0] > 0.5:
+            if patches:
+                lab = labels[idx][0]
+            else:
+                lab = labels[0,j,i,0] # TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO VERIFY I,J or J,I!!!!
+				
+            if lab > 0.5: # TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
                 l = 0
             else:
                 l = 1
@@ -165,24 +190,24 @@ def label_to_img(imgwidth, imgheight, w, h, labels):
 
 
 def img_float_to_uint8(img):
-    rimg = img - numpy.min(img)
-    rimg = (rimg / numpy.max(rimg) * PIXEL_DEPTH).round().astype(numpy.uint8)
+    rimg = img - np.min(img)
+    rimg = (rimg / np.max(rimg) * PIXEL_DEPTH).round().astype(np.uint8)
     return rimg
 
-def concatenate_images(img, gt_img):
+def concatenate_images(img, gt_img): # TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO NEVER CALLED!!
     nChannels = len(gt_img.shape)
     w = gt_img.shape[0]
     h = gt_img.shape[1]
     if nChannels == 3:
-        cimg = numpy.concatenate((img, gt_img), axis=1)
+        cimg = np.concatenate((img, gt_img), axis=1)
     else:
-        gt_img_3c = numpy.zeros((w, h, 3), dtype=numpy.uint8)
+        gt_img_3c = np.zeros((w, h, 3), dtype=np.uint8)
         gt_img8 = img_float_to_uint8(gt_img)
         gt_img_3c[:,:,0] = gt_img8
         gt_img_3c[:,:,1] = gt_img8
         gt_img_3c[:,:,2] = gt_img8
         img8 = img_float_to_uint8(img)
-        cimg = numpy.concatenate((img8, gt_img_3c), axis=1)
+        cimg = np.concatenate((img8, gt_img_3c), axis=1)
     return cimg
 
 def False_concatenate_images(gt_img): # just to make predictions
@@ -190,7 +215,7 @@ def False_concatenate_images(gt_img): # just to make predictions
     w = gt_img.shape[0]
     h = gt_img.shape[1]
 
-    gt_img_3c = numpy.zeros((w, h, 3), dtype=numpy.uint8)
+    gt_img_3c = np.zeros((w, h, 3), dtype=np.uint8)
     gt_img8 = img_float_to_uint8(gt_img)
     gt_img_3c[:,:,0] = gt_img8
     gt_img_3c[:,:,1] = gt_img8
@@ -200,7 +225,7 @@ def False_concatenate_images(gt_img): # just to make predictions
 def make_img_overlay(img, predicted_img):
     w = img.shape[0]
     h = img.shape[1]
-    color_mask = numpy.zeros((w, h, 3), dtype=numpy.uint8)
+    color_mask = np.zeros((w, h, 3), dtype=np.uint8)
     color_mask[:,:,0] = predicted_img*PIXEL_DEPTH
 
     img8 = img_float_to_uint8(img)
@@ -208,3 +233,27 @@ def make_img_overlay(img, predicted_img):
     overlay = Image.fromarray(color_mask, 'RGB').convert("RGBA")
     new_img = Image.blend(background, overlay, 0.2)
     return new_img
+
+# Make an image summary for 4d tensor image with index idx
+def get_image_summary(img, idx = 0):
+    V = tf.slice(img, (0, 0, 0, idx), (1, -1, -1, 1))
+    img_w = img.get_shape().as_list()[1]
+    img_h = img.get_shape().as_list()[2]
+    min_value = tf.reduce_min(V)
+    V = V - min_value
+    max_value = tf.reduce_max(V)
+    V = V / (max_value*PIXEL_DEPTH)
+    V = tf.reshape(V, (img_w, img_h, 1))
+    V = tf.transpose(V, (2, 0, 1))
+    V = tf.reshape(V, (-1, img_w, img_h, 1))
+    return V
+
+# Make an image summary for 3d tensor image with index idx
+def get_image_summary_3d(img):
+    V = tf.slice(img, (0, 0, 0), (1, -1, -1))
+    img_w = img.get_shape().as_list()[1]
+    img_h = img.get_shape().as_list()[2]
+    V = tf.reshape(V, (img_w, img_h, 1))
+    V = tf.transpose(V, (2, 0, 1))
+    V = tf.reshape(V, (-1, img_w, img_h, 1))
+    return V
