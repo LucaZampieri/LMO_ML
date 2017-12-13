@@ -1,6 +1,8 @@
-""" Helper functions for the TF"""
+""" Helper functions for the TF
+"""
 
 
+############################# imports ##########################################
 import gzip
 import os
 import sys
@@ -9,13 +11,11 @@ import matplotlib.image as mpimg
 from PIL import Image
 
 import code
-
 import numpy as np
-
 import cv2
 
 
-# ################################ Variables ##################
+# ################################ Variables ###################################
 NUM_CHANNELS = 3 # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2  # 0 or 1
@@ -27,13 +27,13 @@ CONSIDER_PATCHES = False # True if we split the images patch by path, False if w
 IMG_PATCH_SIZE = 16
 
 ########################## functions ###########################################
-# balance the data
 def balance_classes_in_data(train_data,train_labels):
-    # Count the number of data points on each class
-    c0 = np.sum((train_labels[:,0]==1)*1)
+    """Balances the data by class. i.e. it will make sure that there is the same
+     number of dataIn our case it will output the same number of patches that countain
+     roads than the ones that are background  """
+    c0 = np.sum((train_labels[:,0]==1)*1) # Count the number of data points on each class
     c1 = train_labels.shape[0]-c0
     print ('Number of data points per class: c0 = ' + str(c0) + ' c1 = ' + str(c1))
-
     # Balance to take the same number of patches with c0 and c1 classes
     print ('Balancing training data...')
     min_c = min(c0, c1)
@@ -54,6 +54,11 @@ def balance_classes_in_data(train_data,train_labels):
 
 # Extract patches from a given image
 def img_crop(im, w, h):
+    """ Extract a list of patches from a given image
+    im: input image
+    w: width of input image
+    h: height of input image
+    """
     list_patches = []
     imgwidth = im.shape[0]
     imgheight = im.shape[1]
@@ -72,6 +77,10 @@ def img_crop(im, w, h):
 def extract_data(filename, num_images, patches=True, mytype='train'):
     """Extract the images into a 4D tensor [image index, y, x, channels].
     Values are rescaled from [0, 255] down to [-0.5, 0.5].
+    filename:
+    num_images:
+    patches: boolean
+
     """
     print('Extracting data...')
     imgs = []
@@ -175,6 +184,7 @@ def print_predictions(predictions, labels):
 
 # Convert array of labels to an image
 def label_to_img(imgwidth, imgheight, w, h, labels, patches=True):
+    """Takes as nu """
     array_labels = np.zeros([imgwidth, imgheight])
     idx = 0
     threshold = 0.5
@@ -191,7 +201,7 @@ def label_to_img(imgwidth, imgheight, w, h, labels, patches=True):
         median_ = np.median(labels[:,:,:,0])
         p = np.percentile(labels[:,:,:,0],20)
         threshold = p#(min_+max_)/2
-        
+
     print (labels.shape)
     print('          mean input: ', mean_, '---------------')
     print('median: ',median_)
