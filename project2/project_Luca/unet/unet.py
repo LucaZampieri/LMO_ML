@@ -162,7 +162,6 @@ def create_conv_net(x, keep_prob, channels, n_class, layers=3, features_root=16,
         variables.append(b1)
         variables.append(b2)
 
-
     return output_map, variables, int(in_size - size)
 
 
@@ -262,7 +261,6 @@ class Unet(object):
             self.restore(sess, model_path)
 
             y_dummy = np.empty((x_test.shape[0], x_test.shape[1], x_test.shape[2], self.n_class))
-            print(y_dummy.shape)
             prediction = sess.run(self.predicter, feed_dict={self.x: x_test, self.y: y_dummy, self.keep_prob: 1.})
 
         return prediction
@@ -443,8 +441,6 @@ class Trainer(object):
 
                     if step % display_step == 0:
                         self.output_minibatch_stats(sess, summary_writer, step, batch_x, util.crop_to_shape(batch_y, pred_shape))
-                        print ('      advance: : ',\
-                                int( (epoch*training_iters+step)/(epochs*training_iters) )*100,'%')
 
                     total_loss += loss
 
@@ -461,7 +457,11 @@ class Trainer(object):
                                                              self.net.y: batch_y,
                                                              self.net.keep_prob: 1.})
         pred_shape = prediction.shape
-
+        """print('---BOH--')
+        print(pred_shape)
+        print(batch_y.shape)
+        print(util.crop_to_shape(batch_y, pred_shape))
+        """
         loss = sess.run(self.net.cost, feed_dict={self.net.x: batch_x,
                                                        self.net.y: util.crop_to_shape(batch_y, pred_shape),
                                                        self.net.keep_prob: 1.})
