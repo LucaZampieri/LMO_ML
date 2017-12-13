@@ -69,6 +69,8 @@ def bias_variable(shape):
     return tf.Variable(initial, name="B")
 
 ########################## internal functions ##############################
+def lrelu(x,alpha=0.2):
+    return tf.nn.relu(x)-alpha * tf.nn.relu(x)
 
 def flatten_layer(layer):
     """Function to flatten the layers"""
@@ -291,10 +293,10 @@ class NN(object):
 
             # First convolutional layers
             with tf.name_scope('conv1a'):
-                h_conv1 = tf.nn.relu(conv2d(x_image, self.W_conv1) + self.b_conv1)
+                h_conv1 = lrelu(conv2d(x_image, self.W_conv1) + self.b_conv1)
 
             with tf.name_scope('conv1b'):
-                h_conv1b = tf.nn.relu(conv2d(h_conv1, self.W_conv1b) + self.b_conv1b)
+                h_conv1b = lrelu(conv2d(h_conv1, self.W_conv1b) + self.b_conv1b)
 
             # Pooling layer - downsamples by 2X.
             with tf.name_scope('pool1'):
@@ -302,9 +304,9 @@ class NN(object):
 
             # Second convolutional layers
             with tf.name_scope('conv2a'):
-                h_conv2 = tf.nn.relu(conv2d(h_pool1, self.W_conv2) + self.b_conv2)
+                h_conv2 = lrelu(conv2d(h_pool1, self.W_conv2) + self.b_conv2)
             with tf.name_scope('conv2b'):
-                h_conv2b = tf.nn.relu(conv2d(h_conv2, self.W_conv2b) + self.b_conv2b) # h_conv2b
+                h_conv2b = lrelu(conv2d(h_conv2, self.W_conv2b) + self.b_conv2b) # h_conv2b
 
             # Second pooling layer.
             with tf.name_scope('pool2'):
@@ -312,9 +314,9 @@ class NN(object):
 
             # Third convolutional layers
             with tf.name_scope('conv3a'):
-                h_conv3 = tf.nn.relu(conv2d(h_pool2, self.W_conv3) + self.b_conv3)
+                h_conv3 = lrelu(conv2d(h_pool2, self.W_conv3) + self.b_conv3)
             with tf.name_scope('conv3b'):
-                h_conv3b = tf.nn.relu(conv2d(h_conv3, self.W_conv3b) + self.b_conv3b)
+                h_conv3b = lrelu(conv2d(h_conv3, self.W_conv3b) + self.b_conv3b)
 
             # Third pooling layer.
             with tf.name_scope('pool3'):
@@ -322,9 +324,9 @@ class NN(object):
 
             # Fourth convolutional layers
             with tf.name_scope('conv4a'):
-                h_conv4 = tf.nn.relu(conv2d(h_pool3, self.W_conv4) + self.b_conv4)
+                h_conv4 = lrelu(conv2d(h_pool3, self.W_conv4) + self.b_conv4)
             with tf.name_scope('conv4b'):
-                h_conv4b = tf.nn.relu(conv2d(h_conv4, self.W_conv4b) + self.b_conv4b)
+                h_conv4b = lrelu(conv2d(h_conv4, self.W_conv4b) + self.b_conv4b)
 
             # Fourth pooling layer.
             with tf.name_scope('pool4'):
@@ -332,9 +334,9 @@ class NN(object):
 
             # Fifth (and last down) convolutional layers
             with tf.name_scope('conv5a'):
-                h_conv5 = tf.nn.relu(conv2d(h_pool4, self.W_conv5) + self.b_conv5)
+                h_conv5 = lrelu(conv2d(h_pool4, self.W_conv5) + self.b_conv5)
             with tf.name_scope('conv5b'):
-                h_conv5b = tf.nn.relu(conv2d(h_conv5, self.W_conv5b) + self.b_conv5b)
+                h_conv5b = lrelu(conv2d(h_conv5, self.W_conv5b) + self.b_conv5b)
 
             # First up-convolution layer
             with tf.name_scope('upconv1'):
@@ -343,9 +345,9 @@ class NN(object):
 
             # Sixth convolutional layers
             with tf.name_scope('conv6a'):
-                h_conv6 = tf.nn.relu(conv2d(h_upconv1ext, self.W_conv6) + self.b_conv6)
+                h_conv6 = lrelu(conv2d(h_upconv1ext, self.W_conv6) + self.b_conv6)
             with tf.name_scope('conv6b'):
-                h_conv6b = tf.nn.relu(conv2d(h_conv6, self.W_conv6b) + self.b_conv6b)
+                h_conv6b = lrelu(conv2d(h_conv6, self.W_conv6b) + self.b_conv6b)
 
             # Second up-convolution layer
             with tf.name_scope('upconv2'):
@@ -354,9 +356,9 @@ class NN(object):
 
             # Seventh convolutional layers
             with tf.name_scope('conv7a'):
-                h_conv7 = tf.nn.relu(conv2d(h_upconv2ext, self.W_conv7) + self.b_conv7)
+                h_conv7 = lrelu(conv2d(h_upconv2ext, self.W_conv7) + self.b_conv7)
             with tf.name_scope('conv7b'):
-                h_conv7b = tf.nn.relu(conv2d(h_conv7, self.W_conv7b) + self.b_conv7b)
+                h_conv7b = lrelu(conv2d(h_conv7, self.W_conv7b) + self.b_conv7b)
 
             # Third up-convolution layer
             with tf.name_scope('upconv3'):
@@ -365,9 +367,9 @@ class NN(object):
 
             # Eigth convolutional layers
             with tf.name_scope('conv8a'):
-                h_conv8 = tf.nn.relu(conv2d(h_upconv3ext, self.W_conv8) + self.b_conv8)
+                h_conv8 = lrelu(conv2d(h_upconv3ext, self.W_conv8) + self.b_conv8)
             with tf.name_scope('conv8b'):
-                h_conv8b = tf.nn.relu(conv2d(h_conv8, self.W_conv8b) + self.b_conv8b)
+                h_conv8b = lrelu(conv2d(h_conv8, self.W_conv8b) + self.b_conv8b)
 
             # Fourth up-convolution layer
             with tf.name_scope('upconv4'):
@@ -379,9 +381,9 @@ class NN(object):
 
             # Nineth convolutional layers
             with tf.name_scope('conv9a'):
-                h_conv9 = tf.nn.relu(conv2d(h_upconv4ext, self.W_conv9) + self.b_conv9)
+                h_conv9 = lrelu(conv2d(h_upconv4ext, self.W_conv9) + self.b_conv9)
             with tf.name_scope('conv9b'):
-                h_conv9b = tf.nn.relu(conv2d(h_conv9, self.W_conv9b) + self.b_conv9b)
+                h_conv9b = lrelu(conv2d(h_conv9, self.W_conv9b) + self.b_conv9b)
 
             # Last 1x1 convolutional layer
             with tf.name_scope('lastconv'):
