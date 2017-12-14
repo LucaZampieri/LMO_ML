@@ -62,7 +62,7 @@ trainer = unet.Trainer(net, batch_size=batch_size, optimizer=optimizer)
     #, opt_kwargs=dict(momentum=0.2)), learning_rate, decay_rate
 path = trainer.train(data=data, labels=labels, output_path="./unet_trained/"+saving_path,
                      training_iters=training_iters, epochs=epochs, dropout=dropout,
-                     display_step=display_step, prediction_path='prediction') # 20, 20
+                     display_step=display_step, prediction_path='./prediction/'+saving_path) # 20, 20
 prediction = net.predict("./unet_trained/"+saving_path+"model.cpkt", initial_data)
 
 # Plot results -------------------------
