@@ -161,15 +161,6 @@ def extract_data(filename, num_images, augmentation=False, train=False):
                 imgs.append(np.flip(rotate_img(img_cv2, 90, True),2)/255)
                 imgs.append(np.flip(rotate_img(img_cv2, 180, True),2)/255)
                 imgs.append(np.flip(rotate_img(img_cv2, 270, True),2)/255)
-
-                if i==2:
-                    plt.subplot(151),plt.imshow(img),plt.title('Input')
-                    plt.subplot(152),plt.imshow(np.flip(rotate_img(img_cv2, 90, True),2)/255),plt.title('Output')
-                    plt.subplot(153),plt.imshow(np.flip(rotate_img(img_cv2, 180, True),2)/255),plt.title('Output')
-                    plt.subplot(154),plt.imshow(np.flip(rotate_img(img_cv2, 270, True),2)/255),plt.title('Output')
-                    plt.subplot(155),plt.imshow(img_flip),plt.title('Output')
-                    plt.show()
-
         else:
             print ('File ' + image_filename + ' does not exist')
 
@@ -213,15 +204,6 @@ def extract_labels(filename, num_images, augmentation=False):
                 gt_imgs.append(rotate_img(img_cv2, 90, True)/255)
                 gt_imgs.append(rotate_img(img_cv2, 180, True)/255)
                 gt_imgs.append(rotate_img(img_cv2, 270, True)/255)
-
-                if i==2:
-                    plt.subplot(151),plt.imshow(img),plt.title('Input')
-                    plt.subplot(152),plt.imshow(rotate_img(img_cv2, 90, True)/255),plt.title('Output')
-                    plt.subplot(153),plt.imshow(rotate_img(img_cv2, 180, True)/255),plt.title('Output')
-                    plt.subplot(154),plt.imshow(rotate_img(img_cv2, 270, True)/255),plt.title('Output')
-                    plt.subplot(155),plt.imshow(gt_img_flip),plt.title('Output')
-                    plt.show()
-
         else:
             print ('File ' + image_filename + ' does not exist')
 

@@ -1,14 +1,15 @@
 # coding: utf-8
-# Implementation and run with U-Net architecture
+# Making road segmentation with a U-Net architecture
 
 from __future__ import division, print_function
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
+import os
 
 import unet
 from util import rotate_img, flip_img, extract_data, extract_labels
-
+from mask_to_submission import masks_to_submission
 
 # --- Define parameters and input/output files ---
 # Input directories
@@ -17,8 +18,9 @@ train_data_filename = data_dir + 'images/'
 train_labels_filename = data_dir + 'groundtruth/'
 test_data_dir = '../test_set_images/'
 
-# Ouput directory
-saving_path = 'trial1/'
+# Ouput directory and submission file
+saving_path = 'trial1/' #'betterResults2/'
+submission_filename = './output/'+saving_path+'submission.csv'
 
 # Training and testing parameters
 optimizer = "adam"
@@ -28,11 +30,13 @@ nb_layers = 5
 features_root = 4
 
 augmentation = False
-TRAINING_SIZE = 5
+TRAINING_SIZE = 30 # 100
 TESTING_SIZE = 5
-batch_size = 2 #16
-training_iters = 5
-epochs = 5
+batch_size = 16 #16
+training_iters = 16 #20
+epochs = 6 #13
+
+foreground_threshold = 0.25
 
 # --- Data extraction ---
 data = extract_data(train_data_filename, TRAINING_SIZE, augmentation=augmentation, train=True)
@@ -65,7 +69,8 @@ path = trainer.train(data=data, labels=labels, output_path="./unet_trained/"+sav
                      display_step=display_step, prediction_path='./prediction/'+saving_path) # 20, 20
 prediction = net.predict("./unet_trained/"+saving_path+"model.cpkt", initial_data)
 
-# Plot results -------------------------
+# Plot training results -------------------------
+path_saved_pred = "output/"+saving_path
 for num in range(0,TRAINING_SIZE):
     fig, ax = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(12,5))
     ax[0].imshow(initial_data[num])
@@ -77,7 +82,9 @@ for num in range(0,TRAINING_SIZE):
     ax[1].set_title("Ground truth")
     ax[2].set_title("Prediction")
     fig.tight_layout()
-    fig.savefig("output/"+saving_path+"roadSegmentationTrain"+str(num)+".png")
+    if not os.path.exists(path_saved_pred):
+        os.makedirs(path_saved_pred)
+    fig.savefig(path_saved_pred+"roadSegmentationTrain"+str(num)+".png")
 
 # ----------------------------
 # --------- TESTING ---------
@@ -85,7 +92,7 @@ for num in range(0,TRAINING_SIZE):
 test_data = extract_data(test_data_dir, TESTING_SIZE, train=False)
 test_prediction = net.predict("./unet_trained/"+saving_path+"model.cpkt", test_data)
 
-# Plot results -------------------------
+# Plot testing results -------------------------
 for num in range(0,TESTING_SIZE):
     fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=(12,6))
     ax[0].imshow(test_data[num], aspect="auto")
@@ -95,4 +102,11 @@ for num in range(0,TESTING_SIZE):
     ax[0].set_title("Input")
     ax[1].set_title("Prediction")
     fig.tight_layout()
-    fig.savefig("output/"+saving_path+"roadSegmentationTest"+str(num)+".png")
+    fig.savefig(path_saved_pred+"roadSegmentationTest"+str(num)+".png")
+
+# Make submission -------------------------
+image_filenames = []
+for i in range(1, 51):
+    image_filename = test_data_dir+"test_%.1d" % i  + "/test_%.1d" % i + ".png"
+    image_filenames.append(image_filename)
+masks_to_submission(submission_filename, *image_filenames, foreground_threshold=foreground_threshold)
