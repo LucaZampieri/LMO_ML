@@ -16,6 +16,8 @@
 Created on Aug 19, 2016
 
 author: jakeret
+
+Modified in Dec 2017 by O.Chanon, M.Ciprian and L.Zampieri
 '''
 from __future__ import print_function, division, absolute_import, unicode_literals
 
