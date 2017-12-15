@@ -150,7 +150,7 @@ def extract_data(filename, num_images, augmentation=False, train=False):
             #print ('Loading ' + image_filename)
             img = mpimg.imread(image_filename)
             imgs.append(img)
-
+            
             if augmentation:
                 img_cv2 = cv2.imread(image_filename)
                 img_flip = np.flip(flip_img(img_cv2, 1),2)/255
@@ -159,9 +159,10 @@ def extract_data(filename, num_images, augmentation=False, train=False):
                 imgs.append(np.flip(rotate_img(img_cv2, 90, True),2)/255)
                 imgs.append(np.flip(rotate_img(img_cv2, 180, True),2)/255)
                 imgs.append(np.flip(rotate_img(img_cv2, 270, True),2)/255)
+
         else:
             print ('File ' + image_filename + ' does not exist')
-
+    
     img_size = imgs[0].shape[0]
     img_height = imgs[0].shape[1]
     if img_size != img_height:
@@ -193,7 +194,7 @@ def extract_labels(filename, num_images, augmentation=False):
             #print ('Loading ' + image_filename)
             img = mpimg.imread(image_filename)
             gt_imgs.append(img)
-
+            
             if augmentation:
                 img_cv2 = cv2.imread(image_filename,0)
                 gt_img_flip = flip_img(img_cv2, 1)/255
@@ -202,14 +203,14 @@ def extract_labels(filename, num_images, augmentation=False):
                 gt_imgs.append(rotate_img(img_cv2, 90, True)/255)
                 gt_imgs.append(rotate_img(img_cv2, 180, True)/255)
                 gt_imgs.append(rotate_img(img_cv2, 270, True)/255)
+
         else:
             print ('File ' + image_filename + ' does not exist')
 
     data = np.asarray(gt_imgs)
-    out_lab = [[[value_to_class(data[i][j][k])
-                for k in range(data.shape[2])]
-                for j in range(data.shape[1])]
-                for i in range(data.shape[0])]
+    out_lab = [[[value_to_class(data[i][j][k]) for k in range(data.shape[2])] for j in range(data.shape[1])] for i in range(data.shape[0])]
 
     # Convert to dense 1-hot representation.
     return np.asarray(out_lab).astype(np.float32)
+
+
