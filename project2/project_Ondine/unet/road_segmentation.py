@@ -8,7 +8,7 @@ import numpy as np
 import os
 
 import unet
-from util import rotate_img, flip_img, extract_data, extract_labels
+from util import rotate_img, flip_img, extract_data, extract_labels, combine_img_prediction, save_image
 from mask_to_submission import masks_to_submission
 
 # --- Define parameters and input/output files ---
@@ -30,11 +30,11 @@ nb_layers = 5
 features_root = 4
 
 augmentation = False
-TRAINING_SIZE = 30 # 100
+TRAINING_SIZE = 10 # 100
 TESTING_SIZE = 5
-batch_size = 16 #16
+batch_size = 4 #16
 training_iters = 16 #20
-epochs = 6 #13
+epochs = 7 # 25 #13
 
 foreground_threshold = 0.25
 
@@ -64,10 +64,10 @@ net = unet.Unet(channels=3, n_class=2, layers=nb_layers, features_root=features_
 # Optimizer = "momentum" or "adam"
 trainer = unet.Trainer(net, batch_size=batch_size, optimizer=optimizer)
     #, opt_kwargs=dict(momentum=0.2)), learning_rate, decay_rate
-path = trainer.train(data=data, labels=labels, output_path="./unet_trained/"+saving_path,
+trained_model_path = trainer.train(data=data, labels=labels, output_path="./unet_trained/"+saving_path,
                      training_iters=training_iters, epochs=epochs, dropout=dropout,
                      display_step=display_step, prediction_path='./prediction/'+saving_path) # 20, 20
-prediction = net.predict("./unet_trained/"+saving_path+"model.cpkt", initial_data)
+prediction = net.predict(trained_model_path, initial_data)
 
 # Plot training results -------------------------
 path_saved_pred = "output/"+saving_path
@@ -85,12 +85,17 @@ for num in range(0,TRAINING_SIZE):
     if not os.path.exists(path_saved_pred):
         os.makedirs(path_saved_pred)
     fig.savefig(path_saved_pred+"roadSegmentationTrain"+str(num)+".png")
+    plt.close(fig)
+
+imggg = combine_img_prediction(initial_data, initial_labels, prediction)
+save_image(imggg, "%s.jpg"%(path_saved_pred+"allPred"))
+
 
 # ----------------------------
 # --------- TESTING ---------
 # ----------------------------
 test_data = extract_data(test_data_dir, TESTING_SIZE, train=False)
-test_prediction = net.predict("./unet_trained/"+saving_path+"model.cpkt", test_data)
+test_prediction = net.predict(trained_model_path, test_data)
 
 # Plot testing results -------------------------
 for num in range(0,TESTING_SIZE):
@@ -103,6 +108,7 @@ for num in range(0,TESTING_SIZE):
     ax[1].set_title("Prediction")
     fig.tight_layout()
     fig.savefig(path_saved_pred+"roadSegmentationTest"+str(num)+".png")
+    plt.close(fig)
 
 # Make submission -------------------------
 image_filenames = []

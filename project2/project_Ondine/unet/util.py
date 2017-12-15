@@ -89,8 +89,6 @@ def crop_to_shape(data, shape):
     """
     offset0 = (data.shape[1] - shape[1])//2
     offset1 = (data.shape[2] - shape[2])//2
-    """print('hhhhhhh', offset0)
-    print(offset1)"""
     if offset0 == offset1 == 0:
         return data
     else:
