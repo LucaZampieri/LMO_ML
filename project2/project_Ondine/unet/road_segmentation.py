@@ -20,7 +20,7 @@ train_labels_filename = data_dir + 'groundtruth/'
 test_data_dir = '../test_set_images/'
 
 # Ouput directory
-saving_path = 'afterCorrections3/'
+saving_path = 'afterLargeCorrections/'
 submission_filename = 'output/'+saving_path+'submission.csv'
 
 # Training and testing parameters
@@ -32,10 +32,10 @@ features_root = 4
 
 augmentation = False
 TRAINING_SIZE = 100
-TESTING_SIZE = 5 #0
+TESTING_SIZE = 50
 batch_size = 16
 training_iters = 20
-epochs = 5 #13
+epochs = 15
 
 foreground_threshold = 0.25
 
@@ -78,7 +78,7 @@ prediction = net.predict(trained_model_path, data) # HERE trained_model_path
 path_saved_pred = "output/"+saving_path
 for num in range(0,TRAINING_SIZE):
     fig, ax = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(12,5))
-    ax[0].imshow(data[num])
+    ax[0].imshow(data[num], aspect="auto")
     ax[1].imshow(labels[num,:,:,1], aspect="auto")
     #mask = prediction[num,:,:,1] > 0.3
     #ax[2].imshow(mask, aspect="auto")
