@@ -9,6 +9,7 @@ import os
 
 import unet
 from util import rotate_img, flip_img, extract_data, extract_labels, combine_img_prediction, save_image
+import image_util
 from mask_to_submission import masks_to_submission
 
 # --- Define parameters and input/output files ---
@@ -19,7 +20,7 @@ train_labels_filename = data_dir + 'groundtruth/'
 test_data_dir = '../test_set_images/'
 
 # Ouput directory
-saving_path = 'afterCorrections/'
+saving_path = 'afterCorrections3/'
 submission_filename = 'output/'+saving_path+'submission.csv'
 
 # Training and testing parameters
@@ -30,17 +31,18 @@ nb_layers = 5
 features_root = 4
 
 augmentation = False
-TRAINING_SIZE = 10 #0
+TRAINING_SIZE = 100
 TESTING_SIZE = 5 #0
 batch_size = 16
 training_iters = 20
-epochs = 2 #13
+epochs = 5 #13
 
 foreground_threshold = 0.25
 
 # --- Data extraction ---
 data = extract_data(train_data_filename, TRAINING_SIZE, augmentation=augmentation, train=True)
 labels = extract_labels(train_labels_filename, TRAINING_SIZE, augmentation=augmentation)
+img_provider = image_util.SimpleDataProvider(data=data, label=labels, channels=3, n_class=2)
 
 print(' ')
 print('Shape data:', data.shape)
@@ -58,7 +60,8 @@ print('Creating the trainer...')
 trainer = unet.Trainer(net, batch_size=batch_size, optimizer=optimizer)
     #, opt_kwargs=dict(momentum=0.2)), learning_rate, decay_rate
 print('Beginning of the training...')
-trained_model_path = trainer.train(data=data, labels=labels, output_path="./unet_trained/"+saving_path,
+#trained_model_path = trainer.train(data=data, labels=labels, output_path="./unet_trained/"+saving_path,
+trained_model_path = trainer.train(data_provider=img_provider, output_path="./unet_trained/"+saving_path,
                      training_iters=training_iters, epochs=epochs, dropout=dropout,
                      display_step=display_step, prediction_path='./prediction/'+saving_path) # 20, 20
 
@@ -68,6 +71,7 @@ if augmentation:
 
 print('Making predictions...')
 #prediction = net.predict("./unet_trained/"+saving_path+"model.cpkt", data) # HERE trained_model_path
+
 prediction = net.predict(trained_model_path, data) # HERE trained_model_path
 
 # Plot results -------------------------
