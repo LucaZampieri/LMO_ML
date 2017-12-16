@@ -26,6 +26,10 @@ import matplotlib.image as mpimg
 import cv2
 import os
 
+from skimage.transform import rotate
+from skimage.io import imshow, show
+
+
 def plot_prediction(x_test, y_test, prediction, save=False):
     import matplotlib
     import matplotlib.pyplot as plt
@@ -132,7 +136,80 @@ def rotate_img(img, angle, rgb):
 def flip_img(img, border_id):
     return cv2.flip(img, border_id)
 
-def extract_data(filename, num_images, augmentation=False, train=False):
+# Luca added image functions ---------------------------------------------------
+def resize_img(img, size):
+    return cv2.resize(img, (size,size), interpolation = cv2.INTER_AREA)
+
+def rotate_my_img(img,random=True):
+    if random == True:
+        rotations = [30,60]
+        angle = np.random.choice(rotations)
+    else:
+        angle = 45
+    return rotate(img,angle,resize=False,mode='reflect')
+
+def img_divide_in_4(img, size):
+    """ Divide the image in 4 squares lrtb (left-right-top-bottom)
+    im: input image
+    size: size of wanted squares
+    """
+    if img.shape[0]<=size or img.shape[1]<=size:
+        return [img,img,img,img]
+    list_imgs= []
+    list_imgs.append(img[:size, :size])
+    list_imgs.append(img[:size,  -size:])
+    list_imgs.append(img[-size:, :size])
+    list_imgs.append(img[-size:, -size:])
+    return list_imgs
+
+def postprocess_labels_test(labels, size):
+    labels = np.array([resize_img(labels[i], 400) for i in range(labels.shape[0])])
+
+    out_shape = int(labels.shape[0]/4.0)
+    init_size = labels.shape[1]
+    offset = size-init_size
+
+    if offset <= 0:
+        return labels
+
+    out = np.empty([out_shape, size, size, labels.shape[3]])
+    temp = np.zeros([4, size, size, labels.shape[3]])
+    for i in range(out_shape):
+        temp[0, :init_size, :init_size, :] = labels[4*i]
+        temp[1, :init_size, -init_size:, :] = labels[4*i+1]
+        temp[2, -init_size:, :init_size, :] = labels[4*i+2]
+        temp[3, -init_size:, -init_size:, :] = labels[4*i+3]
+
+        out[i] = np.sum(temp, axis=0)
+        out[i, :offset, offset:-offset, :] /= 2.0
+        out[i, -offset:, offset:-offset, :] /= 2.0
+        out[i, offset:-offset, :offset, :] /= 2.0
+        out[i, offset:-offset, -offset:, :] /= 2.0
+        out[i, offset:-offset, offset:-offset, :] /= 4.0
+    return out
+
+def postprocess_imgs_test(data, size):
+    data = np.array([resize_img(data[i], 400) for i in range(data.shape[0])])
+
+    out_shape = int(data.shape[0]/4.0)
+    init_size = data.shape[1]
+    offset = size-init_size
+
+    if offset <= 0:
+        return data
+
+    out = np.empty([out_shape, size, size, data.shape[3]])
+    for i in range(out_shape):
+        out[i, :init_size, :init_size, :] = data[4*i]
+        out[i, :init_size, offset:, :] = data[4*i+1]
+        out[i, offset:, :init_size, :] = data[4*i+2]
+        out[i, offset:, offset:, :] = data[4*i+3]
+    return out
+
+# end luca added image functions -----------------------------------------------
+
+# added resize flag
+def extract_data(filename, num_images, augmentation=False, train=False, resize=False):
     """Extract the images into a 4D tensor [image index, y, x, channels].
     Values are rescaled from [0, 255] down to [-0.5, 0.5].
     """
@@ -149,20 +226,26 @@ def extract_data(filename, num_images, augmentation=False, train=False):
         if os.path.isfile(image_filename):
             #print ('Loading ' + image_filename)
             img = mpimg.imread(image_filename)
+            if resize == True:
+                img = resize_img(img, 256)
             imgs.append(img)
-            
-            if augmentation:
-                img_cv2 = cv2.imread(image_filename)
-                img_flip = np.flip(flip_img(img_cv2, 1),2)/255
-                imgs.append(img_flip)
 
-                imgs.append(np.flip(rotate_img(img_cv2, 90, True),2)/255)
-                imgs.append(np.flip(rotate_img(img_cv2, 180, True),2)/255)
-                imgs.append(np.flip(rotate_img(img_cv2, 270, True),2)/255)
+            if augmentation:
+                if resize == True:
+                    imgs.append(rotate_my_img(img,random=False))
+                    imgs.append(rotate_my_img(img,random=True))
+                else :
+                    img_cv2 = cv2.imread(image_filename)
+                    img_flip = np.flip(flip_img(img_cv2, 1),2)/255
+                    imgs.append(img_flip)
+
+                    imgs.append(np.flip(rotate_img(img_cv2, 90, True),2)/255)
+                    imgs.append(np.flip(rotate_img(img_cv2, 180, True),2)/255)
+                    imgs.append(np.flip(rotate_img(img_cv2, 270, True),2)/255)
 
         else:
             print ('File ' + image_filename + ' does not exist')
-    
+
     img_size = imgs[0].shape[0]
     img_height = imgs[0].shape[1]
     if img_size != img_height:
@@ -181,7 +264,7 @@ def value_to_class(v):
         return [1, 0]
 
 # Extract label images
-def extract_labels(filename, num_images, augmentation=False):
+def extract_labels(filename, num_images, augmentation=False, resize=False):
     """Extract the labels into a 1-hot matrix [image index, label index]."""
     print('Extracting labels...')
     gt_imgs = []
@@ -193,16 +276,22 @@ def extract_labels(filename, num_images, augmentation=False):
         if os.path.isfile(image_filename):
             #print ('Loading ' + image_filename)
             img = mpimg.imread(image_filename)
+            if resize == True:
+                img = resize_img(img, 256)
             gt_imgs.append(img)
-            
-            if augmentation:
-                img_cv2 = cv2.imread(image_filename,0)
-                gt_img_flip = flip_img(img_cv2, 1)/255
-                gt_imgs.append(gt_img_flip)
 
-                gt_imgs.append(rotate_img(img_cv2, 90, True)/255)
-                gt_imgs.append(rotate_img(img_cv2, 180, True)/255)
-                gt_imgs.append(rotate_img(img_cv2, 270, True)/255)
+            if augmentation:
+                if resize == True:
+                    gt_imgs.append(rotate_my_img(img,random=False))
+                    gt_imgs.append(rotate_my_img(img,random=True))
+                else :
+                    img_cv2 = cv2.imread(image_filename,0)
+                    gt_img_flip = flip_img(img_cv2, 1)/255
+                    gt_imgs.append(gt_img_flip)
+
+                    gt_imgs.append(rotate_img(img_cv2, 90, True)/255)
+                    gt_imgs.append(rotate_img(img_cv2, 180, True)/255)
+                    gt_imgs.append(rotate_img(img_cv2, 270, True)/255)
 
         else:
             print ('File ' + image_filename + ' does not exist')
@@ -213,4 +302,105 @@ def extract_labels(filename, num_images, augmentation=False):
     # Convert to dense 1-hot representation.
     return np.asarray(out_lab).astype(np.float32)
 
+# Functions from the old code ----------------------------------------
+def binary_to_uint8(img):
+    rimg = (img * 255).round().astype(np.uint8)
+    return rimg
 
+
+def img_float_to_uint8(img):
+    rimg = img - np.min(img)
+    rimg = (rimg / np.max(rimg) * 255).round().astype(np.uint8) # if pixel_depth = 255
+    return rimg
+
+
+def value_to_class_2(v,threshold):
+    # you can remark the hot encoding
+    foreground_threshold = threshold # percentage of pixels > 1 required to assign a foreground label to a patch TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+    df = np.sum(v)
+    if df > foreground_threshold:
+        return [0, 1]
+    else:
+        return [1, 0]
+
+def img_crop(im, w, h):
+    """ Extract a list of patches from a given image
+    im: input image
+    w: width of input image
+    h: height of input image
+    """
+    list_patches = []
+    imgwidth = im.shape[0]
+    imgheight = im.shape[1]
+    is_2d = len(im.shape) < 3
+    for i in range(0,imgheight,h):
+        for j in range(0,imgwidth,w):
+            if is_2d:
+                im_patch = im[j:j+w, i:i+h]
+            else:
+                im_patch = im[j:j+w, i:i+h, :]
+            list_patches.append(im_patch)
+    return list_patches
+
+def label_to_img(imgwidth, imgheight, w, h, labels):
+    im = np.zeros([imgwidth, imgheight])
+    idx = 0
+    for i in range(0,imgheight,h):
+        for j in range(0,imgwidth,w):
+            im[j:j+w, i:i+h] = labels[idx]
+            idx = idx + 1
+    return im
+
+def make_img_overlay(img, predicted_img):
+    w = img.shape[0]
+    h = img.shape[1]
+    color_mask = np.zeros((w, h, 3), dtype=np.uint8)
+    color_mask[:,:,0] = predicted_img*255 # if pixel depth is 255
+
+    img8 = img_float_to_uint8(img)
+    background = Image.fromarray(img8, 'RGB').convert("RGBA")
+    overlay = Image.fromarray(color_mask, 'RGB').convert("RGBA")
+    new_img = Image.blend(background, overlay, 0.3)
+    return new_img
+
+
+# new function: Extract test for when we need to cut the test images:
+def extract_test(filename, num_images, augmentation=False, train=False, resize=True):
+    """Extract the images into a 4D tensor [image index, y, x, channels].
+    Values are rescaled from [0, 255] down to [-0.5, 0.5].
+    """
+    print('Extracting data...')
+    imgs = []
+    for i in range(1, num_images+1):
+        if i%10==0:
+            print('Extract original images... i=',i)
+        if train:
+            imageid = "satImage_%.3d" % i
+        else:
+            imageid = "test_%.1d" % i  + "/test_%.1d" % i
+        image_filename = filename + imageid + ".png"
+        if os.path.isfile(image_filename):
+            #print ('Loading ' + image_filename)
+            img = mpimg.imread(image_filename)
+            if resize == True:
+                original_size = img.shape[0]
+                croped_imgs = img_divide_in_4(img, 400) # divide in 4 400x400 img
+                for x in croped_imgs:
+                    x = resize_img(x, 256)
+                    imgs.append(x)
+            else:
+                imgs.append(img)
+
+            if augmentation:
+                imgs.append(rotate_my_img(img,random=False))
+                imgs.append(rotate_my_img(img,random=True))
+
+        else:
+            print ('File ' + image_filename + ' does not exist')
+
+    img_size = imgs[0].shape[0]
+    img_height = imgs[0].shape[1]
+    if img_size != img_height:
+        print('Error!! The images should have their height equal to their width.')
+
+    return np.asarray(imgs).astype(np.float32), original_size
