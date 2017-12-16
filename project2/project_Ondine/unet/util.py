@@ -28,7 +28,7 @@ import os
 
 from skimage.transform import rotate
 from skimage.io import imshow, show
-
+# from padding import mirror_padding
 
 def plot_prediction(x_test, y_test, prediction, save=False):
     import matplotlib
@@ -162,12 +162,15 @@ def img_divide_in_4(img, size):
     list_imgs.append(img[-size:, -size:])
     return list_imgs
 
-def postprocess_labels_test(labels, size):
+def postprocess_labels_test(labels, size): #, pixels_bc=0):
     labels = np.array([resize_img(labels[i], 400) for i in range(labels.shape[0])])
+    print('heeeeee')
+    print(labels.shape)
 
     out_shape = int(labels.shape[0]/4.0)
     init_size = labels.shape[1]
     offset = size-init_size
+    offset_artifact = 10
 
     if offset <= 0:
         return labels
@@ -175,20 +178,20 @@ def postprocess_labels_test(labels, size):
     out = np.empty([out_shape, size, size, labels.shape[3]])
     temp = np.zeros([4, size, size, labels.shape[3]])
     for i in range(out_shape):
-        temp[0, :init_size, :init_size, :] = labels[4*i]
-        temp[1, :init_size, -init_size:, :] = labels[4*i+1]
-        temp[2, -init_size:, :init_size, :] = labels[4*i+2]
-        temp[3, -init_size:, -init_size:, :] = labels[4*i+3]
+        temp[0, :init_size-offset_artifact, :init_size-offset_artifact, :] = labels[4*i, :-offset_artifact, :-offset_artifact]
+        temp[1, :init_size-offset_artifact, -init_size+offset_artifact:, :] = labels[4*i+1, :-offset_artifact, offset_artifact:]
+        temp[2, -init_size+offset_artifact:, :init_size-offset_artifact, :] = labels[4*i+2, offset_artifact:, :-offset_artifact]
+        temp[3, -init_size+offset_artifact:, -init_size+offset_artifact:, :] = labels[4*i+3, offset_artifact:, offset_artifact:]
 
         out[i] = np.sum(temp, axis=0)
-        out[i, :offset, offset:-offset, :] /= 2.0
-        out[i, -offset:, offset:-offset, :] /= 2.0
-        out[i, offset:-offset, :offset, :] /= 2.0
-        out[i, offset:-offset, -offset:, :] /= 2.0
-        out[i, offset:-offset, offset:-offset, :] /= 4.0
+        out[i, :offset+offset_artifact, offset+offset_artifact:-offset-offset_artifact, :] /= 2.0
+        out[i, -offset-offset_artifact:, offset+offset_artifact:-offset-offset_artifact, :] /= 2.0
+        out[i, offset+offset_artifact:-offset-offset_artifact, :offset+offset_artifact, :] /= 2.0
+        out[i, offset+offset_artifact:-offset-offset_artifact, -offset-offset_artifact:, :] /= 2.0
+        out[i, offset+offset_artifact:-offset-offset_artifact, offset+offset_artifact:-offset-offset_artifact, :] /= 4.0
     return out
 
-def postprocess_imgs_test(data, size):
+def postprocess_imgs_test(data, size): #, pixels_bc):
     data = np.array([resize_img(data[i], 400) for i in range(data.shape[0])])
 
     out_shape = int(data.shape[0]/4.0)
@@ -242,7 +245,6 @@ def extract_data(filename, num_images, augmentation=False, train=False, resize=F
                     imgs.append(np.flip(rotate_img(img_cv2, 90, True),2)/255)
                     imgs.append(np.flip(rotate_img(img_cv2, 180, True),2)/255)
                     imgs.append(np.flip(rotate_img(img_cv2, 270, True),2)/255)
-
         else:
             print ('File ' + image_filename + ' does not exist')
 

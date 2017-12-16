@@ -24,8 +24,8 @@ test_data_dir = '../test_set_images/'
 
 # Ouput directory
 saving_path = 'trialOndine/'
-model_path = 'afterLargeCorrections/'
-Re_run = False # True if we want to do the training; False if the model already exists
+model_path = 'trialOndine/'
+Re_run = True # True if we want to do the training; False if the model already exists
 submission_filename = 'output/'+saving_path+'submission.csv'
 
 # Training and testing parameters
@@ -40,11 +40,11 @@ resize = True
 TRAINING_SIZE = 10
 TESTING_SIZE = 5
 batch_size = 8
-training_iters = 2
+training_iters = 20
 epochs = 3
 
 foreground_threshold = 0.25
-
+pixels_bc = 10 # TODO know what to put here
 
 # --- Data extraction ---
 data = extract_data(train_data_filename, TRAINING_SIZE, augmentation=augmentation, train=True, resize=resize)
@@ -71,8 +71,9 @@ if Re_run == True:
     print('Beginning of the training...')
     trained_model_path = trainer.train(data_provider=img_provider, output_path="./unet_trained/"+model_path,
                          training_iters=training_iters, epochs=epochs, dropout=dropout,
-                         display_step=display_step, prediction_path='./prediction/'+saving_path) # 20, 20
+                         display_step=display_step, prediction_path='./prediction/'+saving_path)
 
+# retrieve the original images to make the prediction
 if augmentation:
     if resize == True:
         data = data[range(0,data.shape[0],3)]
@@ -88,11 +89,11 @@ if Re_run == True:
 else:
     prediction = net.predict("./unet_trained/"+model_path+"model.cpkt", data)
 
+# resize back to original size
 if resize:
     data = np.array([resize_img(data[i], 400) for i in range(data.shape[0])])
     labels = np.array([resize_img(labels[i], 400) for i in range(labels.shape[0])])
     prediction = np.array([resize_img(prediction[i], 400) for i in range(prediction.shape[0])])
-
 
 # Plot results -------------------------
 path_saved_pred = "output/"+saving_path
@@ -123,6 +124,7 @@ if resize == True:
     test_data, original_size = extract_test(test_data_dir, TESTING_SIZE,augmentation=False, train=False, resize=resize)
 else:
     test_data = extract_data(test_data_dir, TESTING_SIZE, train=False, resize=resize)
+print(test_data.shape)
 
 # choose whether rerunning the whole model or loading the model
 if Re_run == True:
@@ -131,9 +133,10 @@ else :
     test_prediction = net.predict("./unet_trained/"+model_path+"model.cpkt", test_data)
 
 if resize:
-    test_data = postprocess_imgs_test(test_data, original_size)
-    test_prediction = postprocess_labels_test(test_prediction, original_size)
-
+    test_data = postprocess_imgs_test(test_data, original_size) #, pixels_bc)
+    test_prediction = postprocess_labels_test(test_prediction, original_size) #, pixels_bc)
+print(test_data.shape)
+print(test_prediction.shape)
 # Plot results -------------------------
 for num in range(0,TESTING_SIZE):
     fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=(12,6))
@@ -195,5 +198,4 @@ for i in range(1, 51):
     #image_filename = test_data_dir+"test_%.1d" % (num+1)  + "/test_%.1d" % (num+1) + ".png"
     image_filename = path_saved_pred+"patches_pred"+str(i)+".png"
     image_filenames.append(image_filename)
-print(image_filenames)
 masks_to_submission(submission_filename, *image_filenames, foreground_threshold=foreground_threshold)
