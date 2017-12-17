@@ -16,6 +16,8 @@
 Created on Jul 28, 2016
 
 author: jakeret
+
+Modified in Dec 2017 by O.Chanon, M.Ciprian and L.Zampieri
 '''
 from __future__ import print_function, division, absolute_import, unicode_literals
 
@@ -373,12 +375,11 @@ class Trainer(object):
 
         return init
 
-    def train(self, data, labels, output_path, training_iters=10, epochs=100, dropout=0.75, display_step=1, restore=False, write_graph=False, prediction_path = 'prediction'):
+    def train(self, data_provider, output_path, training_iters=10, epochs=100, dropout=0.75, display_step=1, restore=False, write_graph=False, prediction_path = 'prediction'):
         """
         Lauches the training process
 
-        :param data: array of data
-        :param labels: array of labels
+        :param data_provider: callable returning training and verification data
         :param output_path: path where to store checkpoints
         :param training_iters: number of training mini batch iteration
         :param epochs: number of epochs
@@ -405,7 +406,8 @@ class Trainer(object):
                 if ckpt and ckpt.model_checkpoint_path:
                     self.net.restore(sess, ckpt.model_checkpoint_path)
 
-            test_x, test_y = data, labels
+            # test_x, test_y = data, labels # HERE
+            test_x, test_y = data_provider(self.verification_batch_size)
             pred_shape = self.store_prediction(sess, test_x, test_y, "_init")
 
             summary_writer = tf.summary.FileWriter(output_path, graph=sess.graph)
@@ -417,16 +419,17 @@ class Trainer(object):
 
             for epoch in range(epochs):
                 total_loss = 0
-                perm_indices = np.random.permutation(training_indices)
+                # perm_indices = np.random.permutation(training_indices) # HERE
                 for step in range((epoch*training_iters), ((epoch+1)*training_iters)):
 
-                    if train_size != self.batch_size:
+                    """if train_size != self.batch_size: # HERE
                         offset = (step * self.batch_size) % (train_size - self.batch_size)
                     else:
                         offset = 0
 
                     batch_indices = perm_indices[offset:(offset + self.batch_size)]
-                    batch_x, batch_y = test_x[batch_indices], test_y[batch_indices]
+                    batch_x, batch_y = test_x[batch_indices], test_y[batch_indices]"""
+                    batch_x, batch_y = data_provider(self.batch_size)
 
                     # Run optimization op (backprop)
                     _, loss, lr, gradients = sess.run((self.optimizer, self.net.cost, self.learning_rate_node, self.net.gradients_node),
@@ -457,11 +460,6 @@ class Trainer(object):
                                                              self.net.y: batch_y,
                                                              self.net.keep_prob: 1.})
         pred_shape = prediction.shape
-        """print('---BOH--')
-        print(pred_shape)
-        print(batch_y.shape)
-        print(util.crop_to_shape(batch_y, pred_shape))
-        """
         loss = sess.run(self.net.cost, feed_dict={self.net.x: batch_x,
                                                        self.net.y: util.crop_to_shape(batch_y, pred_shape),
                                                        self.net.keep_prob: 1.})
