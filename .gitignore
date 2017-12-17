@@ -23,3 +23,5 @@ project2/project_Luca/try_with_unet/predictions_training/
 project2/.DS_Store
 
 project2/project_Luca/unet/unet_trained/
+project2/project_Luca/unet/prediction/
+project2/project_Luca/unet/output/
