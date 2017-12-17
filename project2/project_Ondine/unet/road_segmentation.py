@@ -9,8 +9,9 @@ import os
 from PIL import Image
 
 import unet
-from util import rotate_img, flip_img, extract_data, extract_labels, combine_img_prediction, save_image, binary_to_uint8, img_float_to_uint8
-from util import make_img_overlay, label_to_img, img_crop, value_to_class_2, extract_test, postprocess_labels_test, postprocess_imgs_test, resize_img
+from util import *
+from postprocessing import *
+from extract_data import *
 import matplotlib.image as mpimg
 import image_util
 from mask_to_submission import masks_to_submission
@@ -23,32 +24,31 @@ train_labels_filename = data_dir + 'groundtruth/'
 test_data_dir = '../test_set_images/'
 
 # Ouput directory
-saving_path = 'trialOndine/'
-model_path = 'trialOndine/'
-Re_run = True # True if we want to do the training; False if the model already exists
+saving_path = 'Ondine_sunny_sunday/'
 submission_filename = 'output/'+saving_path+'submission.csv'
 
 # Training and testing parameters
 optimizer = "adam"
-dropout = 1.0
+dropout = 0.9
 display_step = 5
-nb_layers = 5
+nb_layers = 6
 features_root = 4
 
 augmentation = True
 resize = True
-TRAINING_SIZE = 10
-TESTING_SIZE = 5
+TRAINING_SIZE = 100
+TESTING_SIZE = 50
 batch_size = 8
-training_iters = 20
-epochs = 3
+training_iters = 30
+epochs = 60
 
 foreground_threshold = 0.25
-pixels_bc = 10 # TODO know what to put here
+
+Re_run = True
 
 # --- Data extraction ---
-data = extract_data(train_data_filename, TRAINING_SIZE, augmentation=augmentation, train=True, resize=resize)
-labels = extract_labels(train_labels_filename, TRAINING_SIZE, augmentation=augmentation, resize=resize)
+data, angles = extract_data(train_data_filename, TRAINING_SIZE, augmentation=augmentation, train=True, resize=resize)
+labels = extract_labels(train_labels_filename, TRAINING_SIZE, angles, augmentation=augmentation, resize=resize)
 img_provider = image_util.SimpleDataProvider(data=data, label=labels, channels=3, n_class=2)
 
 print(' ')
@@ -69,31 +69,30 @@ trainer = unet.Trainer(net, batch_size=batch_size, optimizer=optimizer)
     #, opt_kwargs=dict(momentum=0.2)), learning_rate, decay_rate
 if Re_run == True:
     print('Beginning of the training...')
-    trained_model_path = trainer.train(data_provider=img_provider, output_path="./unet_trained/"+model_path,
+    #trained_model_path = trainer.train(data=data, labels=labels, output_path="./unet_trained/"+saving_path,
+    trained_model_path = trainer.train(data_provider=img_provider, output_path="./unet_trained/"+saving_path,
                          training_iters=training_iters, epochs=epochs, dropout=dropout,
-                         display_step=display_step, prediction_path='./prediction/'+saving_path)
+                         display_step=display_step, prediction_path='./prediction/'+saving_path) # 20, 20
 
-# retrieve the original images to make the prediction
+# resize back the images to get the original ones
 if augmentation:
     if resize == True:
-        data = data[range(0,data.shape[0],3)]
-        labels = labels[range(0,labels.shape[0],3)]
+        data = data[range(0,data.shape[0],6)] # 7
+        labels = labels[range(0,labels.shape[0],6)] # 7
     else:
         data = data[range(0,data.shape[0],5)]
         labels = labels[range(0,labels.shape[0],5)]
 
 print('Making predictions...')
-
 if Re_run == True:
-    prediction = net.predict(trained_model_path, data)
+    prediction = net.predict(trained_model_path, data) # HERE trained_model_path
 else:
-    prediction = net.predict("./unet_trained/"+model_path+"model.cpkt", data)
+    prediction = net.predict("./unet_trained/"+saving_path+"model.cpkt", data) # HERE trained_model_path
 
-# resize back to original size
 if resize:
-    data = np.array([resize_img(data[i], 400) for i in range(data.shape[0])])
-    labels = np.array([resize_img(labels[i], 400) for i in range(labels.shape[0])])
     prediction = np.array([resize_img(prediction[i], 400) for i in range(prediction.shape[0])])
+    labels = np.array([resize_img(labels[i], 400) for i in range(labels.shape[0])])
+    data = np.array([resize_img(data[i], 400) for i in range(data.shape[0])])
 
 # Plot results -------------------------
 path_saved_pred = "output/"+saving_path
@@ -121,22 +120,22 @@ save_image(imggg, "%s.jpg"%(path_saved_pred+"allPred"))
 # --------- TESTING ---------
 # ----------------------------
 if resize == True:
-    test_data, original_size = extract_test(test_data_dir, TESTING_SIZE,augmentation=False, train=False, resize=resize)
+    test_data, original_test_pixels, angles_test = extract_test(test_data_dir, TESTING_SIZE,augmentation=augmentation, train=False, resize=resize)
 else:
-    test_data = extract_data(test_data_dir, TESTING_SIZE, train=False, resize=resize)
-print(test_data.shape)
+    test_data, angles_test = extract_data(test_data_dir, TESTING_SIZE, train=False, resize=resize)
 
+print(test_data.shape)
 # choose whether rerunning the whole model or loading the model
 if Re_run == True:
-    test_prediction = net.predict(trained_model_path, test_data)
+    test_prediction = net.predict(trained_model_path, test_data) # HERE trained_model_path
 else :
-    test_prediction = net.predict("./unet_trained/"+model_path+"model.cpkt", test_data)
+    test_prediction = net.predict("./unet_trained/"+saving_path+"model.cpkt", test_data) # HERE trained_model_path
 
 if resize:
-    test_data = postprocess_imgs_test(test_data, original_size) #, pixels_bc)
-    test_prediction = postprocess_labels_test(test_prediction, original_size) #, pixels_bc)
-print(test_data.shape)
-print(test_prediction.shape)
+    print('Postprocessing...')
+    test_prediction = postprocess_test(test_prediction, original_test_pixels, augmentation, angles_test, imgType='label')
+    test_data = postprocess_test(test_data, original_test_pixels, augmentation, angles_test, imgType='data')
+
 # Plot results -------------------------
 for num in range(0,TESTING_SIZE):
     fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=(12,6))
@@ -153,46 +152,40 @@ for num in range(0,TESTING_SIZE):
 # Save results in apropriate folder -------------------------------------------
 for num in range(0,TESTING_SIZE):
     mask_ori = test_prediction[num,:,:,1]
-    #mask = test_prediction[num,:,:,1] > 0.2
-    mask = img_float_to_uint8(mask_ori) # raw predictions
+    #mask_ori = test_prediction[num,:,:,1] > 0.2
+    mask = img_float_to_uint8(mask_ori)
+    # Save raw predictions
     Image.fromarray(mask).save(path_saved_pred+"raw_pred"+str(num+1)+".png")
 
     pred_patches = img_crop(mask_ori, 16, 16)
     data = np.asarray([pred_patches[i] for i in range(len(pred_patches))])
-    out_lab = [value_to_class_2(np.mean(data[i]), foreground_threshold) for i in range(len(data))]
+    out_lab = [value_to_class_2(np.mean(data[i]),0.2) for i in range(len(data))] # TODO foreground_threshold
     out_lab = np.asarray(out_lab).astype(np.float32)
     pred = out_lab[:,1]
 
     pred = label_to_img(mask.shape[0], mask.shape[1], 16, 16, pred)
     pred_to_show = binary_to_uint8(pred)
     Image.fromarray(pred_to_show).save(path_saved_pred+"patches_pred"+str(num+1)+".png")
-
     if resize == True:
         img = test_data[num,:,:,:]
         oimg = make_img_overlay(img, mask_ori)
-        #oimg.save(path_saved_pred+"overlay_pred"+str(num)+".png")
-        oimg2 = make_img_overlay(img, pred)
-        #oimg2.save(path_saved_pred+"overlay_patches_pred"+str(num)+".png")
+        oimg.save(path_saved_pred+"overlay_pred"+str(num+1)+".png")
+
+        oimg = make_img_overlay(img, pred)
+        oimg.save(path_saved_pred+"overlay_patches_pred"+str(num+1)+".png")
     else:
         # get original test image
         image_filename = test_data_dir+"test_%.1d" % (num+1)  + "/test_%.1d" % (num+1) + ".png"
         img = mpimg.imread(image_filename)#.astype(np.float32)
         oimg = make_img_overlay(img, mask_ori)
-        #oimg.save(path_saved_pred+"overlay_pred"+str(num)+".png")
-        oimg2 = make_img_overlay(img, pred)
-        #oimg2.save(path_saved_pred+"overlay_patches_pred"+str(num)+".png")
+        oimg.save(path_saved_pred+"overlay_pred"+str(num+1)+".png")
 
-    widths, heights = zip(*(i.size for i in [oimg, oimg2]))
-    total_width = sum(widths)
-    max_height = max(heights)
-    new_im = Image.new('RGB', (total_width, max_height))
-    x_offset = -1
-    for im in [oimg, oimg2]:
-        new_im.paste(im, (x_offset+1,0))
-        x_offset += im.size[0]
-    new_im.save(path_saved_pred+"overlay_pred"+str(num)+".png")
+        oimg = make_img_overlay(img, pred)
+        oimg.save(path_saved_pred+"overlay_patches_pred"+str(num+1)+".png")
+
 
 # Make submission -------------------------
+print('Making submission...')
 image_filenames = []
 for i in range(1, 51):
     #image_filename = test_data_dir+"test_%.1d" % (num+1)  + "/test_%.1d" % (num+1) + ".png"

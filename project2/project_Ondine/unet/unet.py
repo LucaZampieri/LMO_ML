@@ -419,7 +419,7 @@ class Trainer(object):
 
             for epoch in range(epochs):
                 total_loss = 0
-
+                # perm_indices = np.random.permutation(training_indices) # HERE
                 for step in range((epoch*training_iters), ((epoch+1)*training_iters)):
 
                     """if train_size != self.batch_size: # HERE

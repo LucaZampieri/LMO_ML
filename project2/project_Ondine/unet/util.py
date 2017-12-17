@@ -25,10 +25,12 @@ from PIL import Image
 import matplotlib.image as mpimg
 import cv2
 import os
-
-from skimage.transform import rotate
+from skimage.transform import (rotate, hough_line, hough_line_peaks,
+                               probabilistic_hough_line)
 from skimage.io import imshow, show
-# from padding import mirror_padding
+from skimage import feature
+import pandas as pd
+
 
 def plot_prediction(x_test, y_test, prediction, save=False):
     import matplotlib
@@ -137,16 +139,19 @@ def flip_img(img, border_id):
     return cv2.flip(img, border_id)
 
 # Luca added image functions ---------------------------------------------------
-def resize_img(img, size):
+def resize_img(img, size=256):
     return cv2.resize(img, (size,size), interpolation = cv2.INTER_AREA)
 
-def rotate_my_img(img,random=True):
+def rotate_my_img(img, random=True, angle=45):
     if random == True:
         rotations = [30,60]
         angle = np.random.choice(rotations)
+        return rotate(img, angle, resize=False, mode='reflect'), angle
     else:
-        angle = 45
-    return rotate(img,angle,resize=False,mode='reflect')
+        return rotate(img, angle, resize=False, mode='reflect')
+
+def crop_my_img(img, random=False):
+    return 0
 
 def img_divide_in_4(img, size):
     """ Divide the image in 4 squares lrtb (left-right-top-bottom)
@@ -156,104 +161,15 @@ def img_divide_in_4(img, size):
     if img.shape[0]<=size or img.shape[1]<=size:
         return [img,img,img,img]
     list_imgs= []
-    list_imgs.append(img[:size, :size])
-    list_imgs.append(img[:size,  -size:])
-    list_imgs.append(img[-size:, :size])
-    list_imgs.append(img[-size:, -size:])
+    imgwidth = img.shape[0]
+    imgheight = img.shape[1]
+    list_imgs.append(img[0:size, 0:size])
+    list_imgs.append(img[0:size,  imgheight-size:imgheight])
+    list_imgs.append(img[imgwidth-size:imgwidth, 0:size])
+    list_imgs.append(img[imgwidth-size:imgwidth, imgheight-size:imgheight])
     return list_imgs
 
-def postprocess_labels_test(labels, size): #, pixels_bc=0):
-    labels = np.array([resize_img(labels[i], 400) for i in range(labels.shape[0])])
-    print('heeeeee')
-    print(labels.shape)
-
-    out_shape = int(labels.shape[0]/4.0)
-    init_size = labels.shape[1]
-    offset = size-init_size
-    offset_artifact = 10
-
-    if offset <= 0:
-        return labels
-
-    out = np.empty([out_shape, size, size, labels.shape[3]])
-    temp = np.zeros([4, size, size, labels.shape[3]])
-    for i in range(out_shape):
-        temp[0, :init_size-offset_artifact, :init_size-offset_artifact, :] = labels[4*i, :-offset_artifact, :-offset_artifact]
-        temp[1, :init_size-offset_artifact, -init_size+offset_artifact:, :] = labels[4*i+1, :-offset_artifact, offset_artifact:]
-        temp[2, -init_size+offset_artifact:, :init_size-offset_artifact, :] = labels[4*i+2, offset_artifact:, :-offset_artifact]
-        temp[3, -init_size+offset_artifact:, -init_size+offset_artifact:, :] = labels[4*i+3, offset_artifact:, offset_artifact:]
-
-        out[i] = np.sum(temp, axis=0)
-        out[i, :offset+offset_artifact, offset+offset_artifact:-offset-offset_artifact, :] /= 2.0
-        out[i, -offset-offset_artifact:, offset+offset_artifact:-offset-offset_artifact, :] /= 2.0
-        out[i, offset+offset_artifact:-offset-offset_artifact, :offset+offset_artifact, :] /= 2.0
-        out[i, offset+offset_artifact:-offset-offset_artifact, -offset-offset_artifact:, :] /= 2.0
-        out[i, offset+offset_artifact:-offset-offset_artifact, offset+offset_artifact:-offset-offset_artifact, :] /= 4.0
-    return out
-
-def postprocess_imgs_test(data, size): #, pixels_bc):
-    data = np.array([resize_img(data[i], 400) for i in range(data.shape[0])])
-
-    out_shape = int(data.shape[0]/4.0)
-    init_size = data.shape[1]
-    offset = size-init_size
-
-    if offset <= 0:
-        return data
-
-    out = np.empty([out_shape, size, size, data.shape[3]])
-    for i in range(out_shape):
-        out[i, :init_size, :init_size, :] = data[4*i]
-        out[i, :init_size, offset:, :] = data[4*i+1]
-        out[i, offset:, :init_size, :] = data[4*i+2]
-        out[i, offset:, offset:, :] = data[4*i+3]
-    return out
-
 # end luca added image functions -----------------------------------------------
-
-# added resize flag
-def extract_data(filename, num_images, augmentation=False, train=False, resize=False):
-    """Extract the images into a 4D tensor [image index, y, x, channels].
-    Values are rescaled from [0, 255] down to [-0.5, 0.5].
-    """
-    print('Extracting data...')
-    imgs = []
-    for i in range(1, num_images+1):
-        if i%10==0:
-            print('Extract original images... i=',i)
-        if train:
-            imageid = "satImage_%.3d" % i
-        else:
-            imageid = "test_%.1d" % i  + "/test_%.1d" % i
-        image_filename = filename + imageid + ".png"
-        if os.path.isfile(image_filename):
-            #print ('Loading ' + image_filename)
-            img = mpimg.imread(image_filename)
-            if resize == True:
-                img = resize_img(img, 256)
-            imgs.append(img)
-
-            if augmentation:
-                if resize == True:
-                    imgs.append(rotate_my_img(img,random=False))
-                    imgs.append(rotate_my_img(img,random=True))
-                else :
-                    img_cv2 = cv2.imread(image_filename)
-                    img_flip = np.flip(flip_img(img_cv2, 1),2)/255
-                    imgs.append(img_flip)
-
-                    imgs.append(np.flip(rotate_img(img_cv2, 90, True),2)/255)
-                    imgs.append(np.flip(rotate_img(img_cv2, 180, True),2)/255)
-                    imgs.append(np.flip(rotate_img(img_cv2, 270, True),2)/255)
-        else:
-            print ('File ' + image_filename + ' does not exist')
-
-    img_size = imgs[0].shape[0]
-    img_height = imgs[0].shape[1]
-    if img_size != img_height:
-        print('Error!! The images should have their height equal to their width.')
-
-    return np.asarray(imgs).astype(np.float32)
 
 # Assign a label to a patch v
 def value_to_class(v):
@@ -264,45 +180,6 @@ def value_to_class(v):
         return [0, 1]
     else:
         return [1, 0]
-
-# Extract label images
-def extract_labels(filename, num_images, augmentation=False, resize=False):
-    """Extract the labels into a 1-hot matrix [image index, label index]."""
-    print('Extracting labels...')
-    gt_imgs = []
-    for i in range(1, num_images+1):
-        if i%10==0:
-            print('Extract groundtruth images... i=',i)
-        imageid = "satImage_%.3d" % i
-        image_filename = filename + imageid + ".png"
-        if os.path.isfile(image_filename):
-            #print ('Loading ' + image_filename)
-            img = mpimg.imread(image_filename)
-            if resize == True:
-                img = resize_img(img, 256)
-            gt_imgs.append(img)
-
-            if augmentation:
-                if resize == True:
-                    gt_imgs.append(rotate_my_img(img,random=False))
-                    gt_imgs.append(rotate_my_img(img,random=True))
-                else :
-                    img_cv2 = cv2.imread(image_filename,0)
-                    gt_img_flip = flip_img(img_cv2, 1)/255
-                    gt_imgs.append(gt_img_flip)
-
-                    gt_imgs.append(rotate_img(img_cv2, 90, True)/255)
-                    gt_imgs.append(rotate_img(img_cv2, 180, True)/255)
-                    gt_imgs.append(rotate_img(img_cv2, 270, True)/255)
-
-        else:
-            print ('File ' + image_filename + ' does not exist')
-
-    data = np.asarray(gt_imgs)
-    out_lab = [[[value_to_class(data[i][j][k]) for k in range(data.shape[2])] for j in range(data.shape[1])] for i in range(data.shape[0])]
-
-    # Convert to dense 1-hot representation.
-    return np.asarray(out_lab).astype(np.float32)
 
 # Functions from the old code ----------------------------------------
 def binary_to_uint8(img):
@@ -365,44 +242,26 @@ def make_img_overlay(img, predicted_img):
     new_img = Image.blend(background, overlay, 0.3)
     return new_img
 
+def RGB_to_grey(image):
+    R = image[:,:,0]
+    G = image[:,:,1]
+    B = image[:,:,2]
+    return 0.299* R + 0.587* G + 0.114* B
 
-# new function: Extract test for when we need to cut the test images:
-def extract_test(filename, num_images, augmentation=False, train=False, resize=True):
-    """Extract the images into a 4D tensor [image index, y, x, channels].
-    Values are rescaled from [0, 255] down to [-0.5, 0.5].
-    """
-    print('Extracting data...')
-    imgs = []
-    for i in range(1, num_images+1):
-        if i%10==0:
-            print('Extract original images... i=',i)
-        if train:
-            imageid = "satImage_%.3d" % i
-        else:
-            imageid = "test_%.1d" % i  + "/test_%.1d" % i
-        image_filename = filename + imageid + ".png"
-        if os.path.isfile(image_filename):
-            #print ('Loading ' + image_filename)
-            img = mpimg.imread(image_filename)
-            if resize == True:
-                original_size = img.shape[0]
-                croped_imgs = img_divide_in_4(img, 400) # divide in 4 400x400 img
-                for x in croped_imgs:
-                    x = resize_img(x, 256)
-                    imgs.append(x)
-            else:
-                imgs.append(img)
+def find_angle(img):
+    img=RGB_to_grey(img)
+    edges = feature.canny(img,sigma=1.5)
+    lines = probabilistic_hough_line(edges, threshold=5, line_length=25,
+                                 line_gap=3)
+    angles = []
+    for x in lines:
+        a= x[0]
+        b= x[1]
+        angle =  np.arccos( (b[0]-a[0])/np.sqrt((b[0]-a[0])**2+(b[1]-a[1])**2) )*180/3.1415
+        if angle>90:
+            angle = angle - 90
+        angle = angle//1*1 # one can then be changed to other int numbers
+        angles.append(angle)
 
-            if augmentation:
-                imgs.append(rotate_my_img(img,random=False))
-                imgs.append(rotate_my_img(img,random=True))
-
-        else:
-            print ('File ' + image_filename + ' does not exist')
-
-    img_size = imgs[0].shape[0]
-    img_height = imgs[0].shape[1]
-    if img_size != img_height:
-        print('Error!! The images should have their height equal to their width.')
-
-    return np.asarray(imgs).astype(np.float32), original_size
+    dominant_angle = pd.Series(angles).value_counts().index[0]
+    return - dominant_angle

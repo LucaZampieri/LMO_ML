@@ -25,3 +25,8 @@ project2/.DS_Store
 project2/project_Luca/unet/unet_trained/
 project2/project_Luca/unet/prediction/
 project2/project_Luca/unet/output/
+
+project2/project_Ondine/unet/unet_trained/
+project2/project_Ondine/unet/prediction/
+project2/project_Ondine/unet/output/
+project2/project_Ondine/unet/__pycache__/
