@@ -28,7 +28,7 @@ from collections import OrderedDict
 import logging
 
 import tensorflow as tf
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import util
 from layers import (weight_variable, weight_variable_devonc, bias_variable,

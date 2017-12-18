@@ -171,7 +171,7 @@ def img_divide_in_4(img, size):
 
 # end luca added image functions -----------------------------------------------
 
-"""# Assign a label to a patch v
+# Assign a label to a patch v
 def value_to_class(v):
     # you can remark the hot encoding
     foreground_threshold = 0.25 # percentage of pixels > 1 required to assign a foreground label to a patch TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
@@ -179,7 +179,7 @@ def value_to_class(v):
     if df > foreground_threshold:
         return [0, 1]
     else:
-        return [1, 0]"""
+        return [1, 0]
 
 # Functions from the old code ----------------------------------------
 def binary_to_uint8(img):
@@ -193,11 +193,11 @@ def img_float_to_uint8(img):
     return rimg
 
 
-def value_to_class(v, threshold=0.25):
+def value_to_class_2(v,threshold):
     # you can remark the hot encoding
-    # threshold = percentage of pixels > 1 required to assign a foreground label to a patch
+    foreground_threshold = threshold # percentage of pixels > 1 required to assign a foreground label to a patch TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
     df = np.sum(v)
-    if df > threshold:
+    if df > foreground_threshold:
         return [0, 1]
     else:
         return [1, 0]

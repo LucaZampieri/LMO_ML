@@ -28,7 +28,7 @@ from collections import OrderedDict
 import logging
 
 import tensorflow as tf
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import util
 from layers import (weight_variable, weight_variable_devonc, bias_variable,
@@ -263,9 +263,8 @@ class Unet(object):
             # Restore model weights from previously saved model
             self.restore(sess, model_path)
 
-            # y_dummy = np.empty((x_test.shape[0], x_test.shape[1], x_test.shape[2], self.n_class))
-            # self.y: y_dummy,
-            prediction = sess.run(self.predicter, feed_dict={self.x: x_test, self.keep_prob: 1.})
+            y_dummy = np.empty((x_test.shape[0], x_test.shape[1], x_test.shape[2], self.n_class))
+            prediction = sess.run(self.predicter, feed_dict={self.x: x_test, self.y: y_dummy, self.keep_prob: 1.})
 
         return prediction
 
@@ -291,7 +290,7 @@ class Unet(object):
 
         saver = tf.train.Saver()
         saver.restore(sess, model_path)
-        # logging.info("Model restored from file: %s" % model_path)
+        logging.info("Model restored from file: %s" % model_path)
 
 class Trainer(object):
     """
