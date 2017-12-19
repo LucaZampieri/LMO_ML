@@ -38,7 +38,7 @@ features_root = 8 # initial number of features. For each layer, nb_features = fe
 
 TRAINING_SIZE = 100 # size of the training set
 TESTING_SIZE = 50 # size of the testing set
-batch_size = 8 # size of the considered training batch at each iteration
+batch_size = 20 # size of the considered training batch at each iteration
 epochs = 13 # number of epochs
 
 # Model parameters
@@ -61,7 +61,7 @@ submission_filename = 'output/'+saving_path+'submission.csv'
 path_saved_pred = "output/"+saving_path
 nb_imgs_per_img_train = angles_train.shape[0] + flip_train*1 + 1
 nb_imgs_per_img_test = angles_test.shape[0] + flip_test*1 + 1
-training_iters = np.ceil(nb_imgs_per_img_train*epochs/batch_size)
+training_iters = int(np.ceil(nb_imgs_per_img_train*TRAINING_SIZE*epochs/batch_size))
 
 print('Total number of epochs:', epochs)
 print('Batch size:', batch_size)
@@ -154,7 +154,7 @@ test_prediction = np.empty((test_data.shape[0],test_data.shape[1],test_data.shap
 step = 10
 for i in range(0,test_data.shape[0],step):
     if i%50==0:
-        print('-- Prediction step', i)
+        print('-- Prediction step', i, 'su ')
     test_prediction[i:i+step,...] = net.predict(trained_model_path, test_data[i:i+step,...])
 
 print('>>> Postprocessing...')

@@ -25,8 +25,8 @@ def postprocess_test(img, resize=False, train_pixel_nb=400, divide_test_in_4=Fal
                         + rotate_my_img(img[nb_imgs_per_img_test*i+j+1], \
                                         random=False, angle=-angles[j])
             if flip:
-                temp[i] = temp[i] + img[nb_augmented*(i+1)-1,:,::-1]
-            temp[i] /= nb_augmented
+                temp[i] = temp[i] + img[nb_imgs_per_img_test*(i+1)-1,:,::-1]
+            temp[i] /= nb_imgs_per_img_test
     else:
         print('postprocess_test:ERROR! imgType should be either data or label.')
 
