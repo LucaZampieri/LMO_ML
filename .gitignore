@@ -26,11 +26,15 @@ project2/project_Luca/unet/unet_trained/
 project2/project_Luca/unet/prediction/
 project2/project_Luca/unet/output/
 
-project2/project_Ondine/unet/unet_trained/
-project2/project_Ondine/unet/prediction/
-project2/project_Ondine/unet/output/
+project2/project_Ondine/unet/unet_trained/*
+project2/project_Ondine/unet/prediction/*
+project2/project_Ondine/unet/output/*
 project2/project_Ondine/unet/__pycache__/
-project2/project_Ondine/old_unet/unet_trained/
-project2/project_Ondine/old_unet/prediction/
-project2/project_Ondine/old_unet/output/
+project2/project_Ondine/old_unet/unet_trained/*
+project2/project_Ondine/old_unet/prediction/*
+project2/project_Ondine/old_unet/output/*
 project2/project_Ondine/old_unet/__pycache__/
+project2/project_Ondine/unet_with_rotations/unet_trained/*
+project2/project_Ondine/unet_with_rotations/prediction/*
+project2/project_Ondine/unet_with_rotations/output/*
+project2/project_Ondine/unet_with_rotations/__pycache__/
