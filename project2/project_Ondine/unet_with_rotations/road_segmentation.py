@@ -34,7 +34,7 @@ test_data_dir = '../test_set_images/' # testing images directory
 
 # Ouput directory
 saving_path = 'output_path/' # predictions will be saved in ./output/saving_path
-model_path = 'right_epoch_number/' # the model will be saved in ./unet_trained/model_path
+model_path = 'right_epoch_number_four/' # the model will be saved in ./unet_trained/model_path
 
 # Training and testing parameters
 optimizer = "adam" # can be either "adam" or "momentum"
@@ -53,7 +53,7 @@ foreground_threshold = 0.25 # if the probability of a patch to be a road is over
 """ Set carefully Re_run! True if we want to create a new model (i.e. redo the training).
     !!! WARNING !!! The training may take very long. With the optimal parameters
     found, i.e. with 13 epochs, the simulation on our computer (no GPU) took
-    around 10h30. """"
+    around 10h30. """
 Re_run = False
 pred_on_train = False # True if we also want to compute the predictions on the training set, False if we compute them only on the testing set.
 
@@ -104,6 +104,8 @@ if Re_run or pred_on_train:
 
     print('Shape train data:', data.shape)
     print('Shape train labels:', labels.shape)
+else:
+    original_pixel_nb = 400
 
 if Re_run == True:
     print('>>> Training...')
@@ -202,7 +204,9 @@ for num in range(0,TESTING_SIZE):
     ax[1].set_title("Raw prediction")
     ax[2].set_title("Prediction")
     fig.tight_layout()
-    fig.savefig(path_saved_pred+"roadSegmentationTest"+str(num)+".png")
+    if not os.path.exists(path_saved_pred):
+        os.makedirs(path_saved_pred)
+    fig.savefig(path_saved_pred+"roadSegmentationTest"+str(num+1)+".png")
     plt.close(fig)
 
 # Save results in apropriate folder

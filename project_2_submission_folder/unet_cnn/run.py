@@ -53,7 +53,7 @@ foreground_threshold = 0.25 # if the probability of a patch to be a road is over
 """ Set carefully Re_run! True if we want to create a new model (i.e. redo the training).
     !!! WARNING !!! The training may take very long. With the optimal parameters
     found, i.e. with 13 epochs, the simulation on our computer (no GPU) took
-    around 10h30. """"
+    around 10h30. """
 Re_run = False
 pred_on_train = False # True if we also want to compute the predictions on the training set, False if we compute them only on the testing set.
 
@@ -63,7 +63,7 @@ resize_pixel_nb = 256 # Number of pixels on each side of the resized images. Mat
 angles_train = np.array([30, 45, 60, 90, 180, 270]) # Training set will be augmented with the rotations with those angles of each image.
 flip_train = True # True if we augment the training set with a right-column flip of each training image.
 angles_test = np.array([90, 180, 270]) # Testing set will be augmented with the rotations with those angles of each image. The mean over the predictions will be considered.
-pref_rotation = True # If True, the testing set will be augmented with the rotations such that the main direction of the images is vertical.
+pref_rotation = False # If True, the testing set will be augmented with the rotations such that the main direction of the images is vertical.
 flip_test = True # True if we augment the testing set with a right-column flip of each testing image. The mean over the predictions will be considered.
 divide_test_in_4 = True # True if the original image is divided into 4 sub-images to have images in the testing set of the same size as the images in the training set.
 """ --------------------------------------------------------- """
@@ -104,6 +104,8 @@ if Re_run or pred_on_train:
 
     print('Shape train data:', data.shape)
     print('Shape train labels:', labels.shape)
+else:
+    original_pixel_nb = 400
 
 if Re_run == True:
     print('>>> Training...')
@@ -202,7 +204,9 @@ for num in range(0,TESTING_SIZE):
     ax[1].set_title("Raw prediction")
     ax[2].set_title("Prediction")
     fig.tight_layout()
-    fig.savefig(path_saved_pred+"roadSegmentationTest"+str(num)+".png")
+    if not os.path.exists(path_saved_pred):
+        os.makedirs(path_saved_pred)
+    fig.savefig(path_saved_pred+"roadSegmentationTest"+str(num+1)+".png")
     plt.close(fig)
 
 # Save results in apropriate folder
