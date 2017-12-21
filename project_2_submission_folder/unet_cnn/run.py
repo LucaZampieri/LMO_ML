@@ -1,4 +1,4 @@
-""" MAIN FILE road_segmentation.py where the implementation and run of the U-net is done.
+""" MAIN FILE run.py where the implementation and run of the U-net is done.
 - Setting of the different parameters.
 - Creation of the U-net
 - Training of the U-net

@@ -1,4 +1,4 @@
-""" File image_util.py used to handle the data and add it in memory dinamically to save some RAM
+""" File image_util.py used to handle the data and add it in memory dynamically to save some RAM
 # Authors: jakeret, Ondine Chanon, Matteo Ciprian, Luca Zampieri """
 
 # Code taken and modified from the tf_unet code from https://github.com/jakeret/tf_unet
