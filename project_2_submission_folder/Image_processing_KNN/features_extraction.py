@@ -124,7 +124,7 @@ def get_spectrum(img_patches):
 
     
 def get_spectrum_grey(img_patches):
-    # Calculate the fft of the grey scal image
+    # Calculate the fft of the grey scal patch
     #Input:    - image_patches (entire) (  [num_of_patches X n_pixel X n_pixel X 3] matrix )
     #
     #              f= [n_pixel X n_pixel] matrix of complex numbers
