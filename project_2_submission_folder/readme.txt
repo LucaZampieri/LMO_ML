@@ -16,7 +16,7 @@ The .zip folder is organized according to the following structure:
 - "unet_cnn/": folder to run prediction model based on CNN (convolutional neural network). Code used for the final submission.
 
 
-almostIT.zip
+noparty.zip
   |— unet_cnn/
   |   |—- data_processing.ipynb
   |   |—- layers.py
